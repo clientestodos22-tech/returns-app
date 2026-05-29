@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle devolución</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand: #0B4C6F;
+            --brand-dark: #063f5e;
+            --gray-bg: #f3f6f9;
+            --green: #2E7D32;
+            --red: #C62828;
+            --orange: #F57C00;
+            --blue-soft: #e8f4fa;
+            --border: #e5e7eb;
+        }
+
+        body {
+            background: var(--gray-bg);
+            font-family: Arial, sans-serif;
+            color: #111827;
+        }
+
+        .app-navbar {
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand));
+            color: white;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 800;
+            letter-spacing: .3px;
+        }
+
+        .user-pill {
+            background: rgba(255, 255, 255, 0.16);
+            color: white;
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 13px;
+            border: none;
+        }
+
+        .main-wrapper {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .breadcrumb-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+            margin-bottom: 16px;
+        }
+
+        .breadcrumb {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            text-decoration: none;
+            color: var(--brand);
+            font-weight: 700;
+        }
+
+        .detail-card {
+            background: white;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .detail-header {
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand));
+            color: white;
+            padding: 24px 28px;
+        }
+
+        .detail-header h1 {
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: .2px;
+        }
+
+        .detail-body {
+            padding: 28px;
+        }
+
+        .status-badge {
+            font-size: 13px;
+            font-weight: 800;
+            padding: 8px 14px;
+            border-radius: 999px;
+        }
+
+        .section-title {
+            font-weight: 800;
+            color: var(--brand);
+            margin-bottom: 16px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px 28px;
+        }
+
+        .info-box {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .info-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            background: var(--blue-soft);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            margin-top: 2px;
+        }
+
+        .info-label {
+            color: var(--brand);
+            font-weight: 800;
+            font-size: 12px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: .2px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: #111827;
+            word-break: break-word;
+        }
+
+        .btn-brand {
+            background: var(--brand);
+            color: white;
+            border: none;
+            font-weight: 700;
+        }
+
+        .btn-brand:hover {
+            background: var(--brand-dark);
+            color: white;
+        }
+
+        .modal-header {
+            background: var(--brand);
+            color: white;
+        }
+
+        .form-label {
+            font-weight: 700;
+        }
+
+        .activity-section {
+            margin-top: 34px;
+            border-top: 1px solid var(--border);
+            padding-top: 26px;
+        }
+
+        .activity-timeline {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .activity-item {
+            display: grid;
+            grid-template-columns: 125px 44px 1fr;
+            gap: 14px;
+            position: relative;
+            padding-bottom: 22px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: right;
+            padding-top: 8px;
+            line-height: 1.3;
+        }
+
+        .activity-middle {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .activity-middle::after {
+            content: "";
+            position: absolute;
+            top: 44px;
+            bottom: -22px;
+            width: 3px;
+            background: var(--border);
+        }
+
+        .activity-item:last-child .activity-middle::after {
+            display: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: var(--blue-soft);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            font-size: 18px;
+        }
+
+        .activity-content {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+        }
+
+        .activity-title {
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .activity-text {
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .activity-success .activity-icon {
+            background: #e8f5e9;
+            color: var(--green);
+        }
+
+        .activity-danger .activity-icon {
+            background: #ffebee;
+            color: var(--red);
+        }
+
+        .activity-warning .activity-icon {
+            background: #fff8e1;
+            color: var(--orange);
+        }
+
+        .activity-change .activity-icon,
+        .activity-response .activity-icon {
+            background: #e8f4fa;
+            color: var(--brand);
+        }
+
+        .action-footer {
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+            padding-top: 22px;
+        }
+
+        .preview-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .preview-card {
+            border: 1px solid #dbe3ea;
+            background: #f8fbfd;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            text-align: left;
+            padding: 0;
+            width: 100%;
+        }
+
+        .preview-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--brand);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+        }
+
+        .preview-thumb {
+            width: 100%;
+            height: 95px;
+            object-fit: cover;
+            background: #eef5f9;
+            display: block;
+        }
+
+        .preview-file-icon {
+            height: 95px;
+            background: #eef5f9;
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .preview-card-body {
+            padding: 9px 10px;
+        }
+
+        .preview-card-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #111827;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-card-subtitle {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .preview-empty {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .preview-stage {
+            position: relative;
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-modal-image {
+            max-width: 100%;
+            max-height: 72vh;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            border-radius: 10px;
+        }
+
+        .preview-modal-frame {
+            width: 100%;
+            height: 72vh;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .preview-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 46px;
+            height: 46px;
+            border-radius: 999px;
+            border: none;
+            background: rgba(11, 76, 111, 0.88);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            font-size: 22px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .preview-nav-btn:hover {
+            background: #063f5e;
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .preview-nav-prev {
+            left: 18px;
+        }
+
+        .preview-nav-next {
+            right: 18px;
+        }
+
+        .preview-counter {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding: 14px;
+            }
+
+            .detail-body {
+                padding: 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .activity-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .activity-time {
+                text-align: left;
+                padding-top: 0;
+            }
+
+            .activity-middle {
+                display: none;
+            }
+
+            .preview-nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .preview-nav-prev {
+                left: 8px;
+            }
+
+            .preview-nav-next {
+                right: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar app-navbar px-4 py-3">
+    <div class="container-fluid px-0">
+        <a class="navbar-brand" href="{% url 'returns:return_list' %}">
+            <i class="bi bi-box-seam me-2"></i>
+            Returns App
+        </a>
+
+        <div class="dropdown">
+            <button 
+                class="btn user-pill dropdown-toggle" 
+                type="button" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false"
+            >
+                <i class="bi bi-person-circle me-2"></i>
+                {{ request.user.username }}
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li>
+                    <h6 class="dropdown-header">Sesión activa</h6>
+                </li>
+
+                <li>
+                    <span class="dropdown-item-text">
+                        <strong>{{ request.user.username }}</strong>
+                    </span>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a class="dropdown-item" href="{% url 'returns:return_list' %}">
+                        <i class="bi bi-house me-2"></i>
+                        Menú principal
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item text-danger">
+                            <i class="bi bi-box-arrow-right me-2"></i>
+                            Cerrar sesión
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="main-wrapper">
+
+    <div class="breadcrumb-card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'returns:return_list' %}">
+                        <i class="bi bi-house-door me-1"></i>
+                        Home
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'returns:return_list' %}">
+                        Devoluciones
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    Detalle {{ devolucion.correlativo }}
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="detail-card">
+
+        <div class="detail-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1>Detalle devolución</h1>
+                <div class="small mt-1">
+                    Correlativo: <strong>{{ devolucion.correlativo }}</strong>
+                </div>
+            </div>
+
+            <div>
+                {% if devolucion.estado == 'RECIBIDO' %}
+                    <span class="badge text-bg-primary status-badge">{{ devolucion.get_estado_display }}</span>
+                {% elif devolucion.estado == 'EN_REVISION' %}
+                    <span class="badge text-bg-warning status-badge">{{ devolucion.get_estado_display }}</span>
+                {% elif devolucion.estado == 'OBSERVADO' %}
+                    <span class="badge text-bg-warning status-badge">{{ devolucion.get_estado_display }}</span>
+                {% elif devolucion.estado == 'APROBADO' %}
+                    <span class="badge text-bg-success status-badge">{{ devolucion.get_estado_display }}</span>
+                {% elif devolucion.estado == 'RECHAZADO' %}
+                    <span class="badge text-bg-danger status-badge">{{ devolucion.get_estado_display }}</span>
+                {% elif devolucion.estado == 'CERRADO' %}
+                    <span class="badge text-bg-dark status-badge">{{ devolucion.get_estado_display }}</span>
+                {% else %}
+                    <span class="badge text-bg-secondary status-badge">{{ devolucion.get_estado_display }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="detail-body">
+
+            <h4 class="section-title">
+                <i class="bi bi-card-checklist me-2"></i>
+                Información principal
+            </h4>
+
+            <div class="info-grid">
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-calendar-event"></i></div>
+                    <div>
+                        <div class="info-label">Fecha Recepción</div>
+                        <div class="info-value">{{ devolucion.fecha_recepcion }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-hash"></i></div>
+                    <div>
+                        <div class="info-label">N° Documento</div>
+                        <div class="info-value">{{ devolucion.numero_documento }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-file-earmark-text"></i></div>
+                    <div>
+                        <div class="info-label">Documento de ingreso / NC cliente</div>
+                        <div class="info-value">{{ devolucion.documento_ingreso|default:"Pendiente" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-building"></i></div>
+                    <div>
+                        <div class="info-label">Cliente</div>
+                        <div class="info-value">{{ devolucion.cliente }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-upc-scan"></i></div>
+                    <div>
+                        <div class="info-label">SKU</div>
+                        <div class="info-value">{{ devolucion.sku }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-boxes"></i></div>
+                    <div>
+                        <div class="info-label">Cantidad</div>
+                        <div class="info-value">{{ devolucion.cantidad }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-123"></i></div>
+                    <div>
+                        <div class="info-label">Código Numérico</div>
+                        <div class="info-value">{{ devolucion.codigo_numerico|default:"-" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-tag"></i></div>
+                    <div>
+                        <div class="info-label">Serie</div>
+                        <div class="info-value">{{ devolucion.serie|default:"-" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-geo-alt"></i></div>
+                    <div>
+                        <div class="info-label">Ubicación</div>
+                        <div class="info-value">{{ devolucion.ubicacion|default:"-" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-clipboard-check"></i></div>
+                    <div>
+                        <div class="info-label">Estado de Inventario</div>
+                        <div class="info-value">{{ devolucion.numero_dcto_estado|default:"-" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-person-badge"></i></div>
+                    <div>
+                        <div class="info-label">Responsable</div>
+                        <div class="info-value">{{ devolucion.responsable|default:"-" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-icon"><i class="bi bi-person-check"></i></div>
+                    <div>
+                        <div class="info-label">Respondido por</div>
+                        <div class="info-value">{{ devolucion.respondido_por|default:"Pendiente" }}</div>
+                    </div>
+                </div>
+
+                {% if devolucion.estado == 'CERRADO' %}
+                    <div class="info-box">
+                        <div class="info-icon"><i class="bi bi-lock"></i></div>
+                        <div>
+                            <div class="info-label">Cerrado por</div>
+                            <div class="info-value">{{ devolucion.cerrado_por|default:"-" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div>
+                            <div class="info-label">Fecha cierre</div>
+                            <div class="info-value">
+                                {% if devolucion.fecha_cierre %}
+                                    {{ devolucion.fecha_cierre|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <div class="activity-section">
+                <h4 class="section-title mb-3">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Timeline de devolución
+                </h4>
+
+                <div class="activity-timeline">
+
+                    <div class="activity-item">
+                        <div class="activity-time">
+                            {{ devolucion.creado_en|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="activity-middle">
+                            <div class="activity-icon">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Creación de devolución</div>
+                            <p class="activity-text">
+                                Devolución creada por <strong>{{ devolucion.responsable|default:"Sistema" }}</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="activity-item activity-warning">
+                        <div class="activity-time">
+                            {% if devolucion.fecha_en_revision %}
+                                {{ devolucion.fecha_en_revision|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Pendiente
+                            {% endif %}
+                        </div>
+                        <div class="activity-middle">
+                            <div class="activity-icon">
+                                <i class="bi bi-eye"></i>
+                            </div>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">En revisión</div>
+                            <p class="activity-text">
+                                La devolución fue revisada por el cliente o se encuentra en proceso de revisión.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-time">
+                            {{ devolucion.creado_en|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="activity-middle">
+                            <div class="activity-icon">
+                                <i class="bi bi-chat-left-text"></i>
+                            </div>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Observación interna</div>
+                            <p class="activity-text">
+                                {{ devolucion.observaciones|default:"Sin observaciones internas registradas." }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-time">
+                            {{ devolucion.creado_en|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="activity-middle">
+                            <div class="activity-icon">
+                                <i class="bi bi-paperclip"></i>
+                            </div>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Adjuntos internos</div>
+                            <p class="activity-text mb-2">
+                                Documentos o fotos cargados por el equipo interno.
+                            </p>
+
+                            {% if documentos_internos or fotos_internas or devolucion.documento_adjunto or devolucion.foto_evidencia %}
+                                <div class="preview-gallery">
+
+                                    {% for adjunto in documentos_internos %}
+                                        <button 
+                                            type="button"
+                                            class="preview-card js-preview-file"
+                                            data-preview-url="{{ adjunto.archivo.url }}"
+                                            data-preview-title="Documento interno {{ forloop.counter }}"
+                                            data-preview-type="document"
+                                        >
+                                            <div class="preview-file-icon">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </div>
+                                            <div class="preview-card-body">
+                                                <div class="preview-card-title">Documento {{ forloop.counter }}</div>
+                                                <div class="preview-card-subtitle">Click para previsualizar</div>
+                                            </div>
+                                        </button>
+                                    {% endfor %}
+
+                                    {% for adjunto in fotos_internas %}
+                                        <button 
+                                            type="button"
+                                            class="preview-card js-preview-file"
+                                            data-preview-url="{{ adjunto.archivo.url }}"
+                                            data-preview-title="Foto interna {{ forloop.counter }}"
+                                            data-preview-type="image"
+                                        >
+                                            <img src="{{ adjunto.archivo.url }}" class="preview-thumb" alt="Foto interna {{ forloop.counter }}">
+                                            <div class="preview-card-body">
+                                                <div class="preview-card-title">Foto {{ forloop.counter }}</div>
+                                                <div class="preview-card-subtitle">Click para ampliar</div>
+                                            </div>
+                                        </button>
+                                    {% endfor %}
+
+                                    {% if devolucion.documento_adjunto %}
+                                        <button 
+                                            type="button"
+                                            class="preview-card js-preview-file"
+                                            data-preview-url="{{ devolucion.documento_adjunto.url }}"
+                                            data-preview-title="Documento interno"
+                                            data-preview-type="document"
+                                        >
+                                            <div class="preview-file-icon">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </div>
+                                            <div class="preview-card-body">
+                                                <div class="preview-card-title">Documento interno</div>
+                                                <div class="preview-card-subtitle">Click para previsualizar</div>
+                                            </div>
+                                        </button>
+                                    {% endif %}
+
+                                    {% if devolucion.foto_evidencia %}
+                                        <button 
+                                            type="button"
+                                            class="preview-card js-preview-file"
+                                            data-preview-url="{{ devolucion.foto_evidencia.url }}"
+                                            data-preview-title="Foto interna"
+                                            data-preview-type="image"
+                                        >
+                                            <img src="{{ devolucion.foto_evidencia.url }}" class="preview-thumb" alt="Foto interna">
+                                            <div class="preview-card-body">
+                                                <div class="preview-card-title">Foto interna</div>
+                                                <div class="preview-card-subtitle">Click para ampliar</div>
+                                            </div>
+                                        </button>
+                                    {% endif %}
+
+                                </div>
+                            {% else %}
+                                <div class="preview-empty">Sin adjuntos internos.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-time">
+                            {% if devolucion.fecha_adjuntos_cliente %}
+                                {{ devolucion.fecha_adjuntos_cliente|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Pendiente
+                            {% endif %}
+                        </div>
+                        <div class="activity-middle">
+                            <div class="activity-icon">
+                                <i class="bi bi-paperclip"></i>
+                            </div>
+                        </div>
+
+                        <div class="activity-content">
+                            <div class="activity-title">Adjuntos actuales del cliente</div>
+                            <p class="activity-text mb-2">
+                                Últimos documentos o evidencias cargadas por el cliente.
+                            </p>
+
+                            {% if devolucion.documento_respuesta_cliente or devolucion.foto_respuesta_cliente %}
+                                <div class="preview-gallery">
+
+                                    {% if devolucion.documento_respuesta_cliente %}
+                                        <button 
+                                            type="button"
+                                            class="preview-card js-preview-file"
+                                            data-preview-url="{{ devolucion.documento_respuesta_cliente.url }}"
+                                            data-preview-title="Documento cliente"
+                                            data-preview-type="document"
+                                        >
+                                            <div class="preview-file-icon">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </div>
+                                            <div class="preview-card-body">
+                                                <div class="preview-card-title">Documento cliente</div>
+                                                <div class="preview-card-subtitle">Click para previsualizar</div>
+                                            </div>
+                                        </button>
+                                    {% endif %}
+
+                                    {% if devolucion.foto_respuesta_cliente %}
+                                        <button 
+                                            type="button"
+                                            class="preview-card js-preview-file"
+                                            data-preview-url="{{ devolucion.foto_respuesta_cliente.url }}"
+                                            data-preview-title="Foto cliente"
+                                            data-preview-type="image"
+                                        >
+                                            <img src="{{ devolucion.foto_respuesta_cliente.url }}" class="preview-thumb" alt="Foto cliente">
+                                            <div class="preview-card-body">
+                                                <div class="preview-card-title">Foto cliente</div>
+                                                <div class="preview-card-subtitle">Click para ampliar</div>
+                                            </div>
+                                        </button>
+                                    {% endif %}
+
+                                </div>
+                            {% else %}
+                                <div class="preview-empty">Sin adjuntos actuales del cliente.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% for item in historial_extra %}
+                        <div class="activity-item {% if item.tipo == 'APROBADO' or item.tipo == 'CERRADO' %}activity-success{% elif item.tipo == 'RECHAZADO' %}activity-danger{% elif item.tipo == 'EN_REVISION' or item.tipo == 'OBSERVADO' %}activity-warning{% elif item.tipo == 'RESPUESTA_CLIENTE' %}activity-response{% else %}activity-change{% endif %}">
+                            <div class="activity-time">
+                                {{ item.creado_en|date:"d/m/Y H:i" }}
+                            </div>
+
+                            <div class="activity-middle">
+                                <div class="activity-icon">
+                                    {% if item.tipo == 'APROBADO' %}
+                                        <i class="bi bi-check-circle"></i>
+                                    {% elif item.tipo == 'RESPUESTA_CLIENTE' %}
+                                        <i class="bi bi-send"></i>
+                                    {% elif item.tipo == 'OBSERVADO' %}
+                                        <i class="bi bi-chat-square-text"></i>
+                                    {% elif item.tipo == 'CERRADO' %}
+                                        <i class="bi bi-lock"></i>
+                                    {% elif item.tipo == 'RECHAZADO' %}
+                                        <i class="bi bi-x-circle"></i>
+                                    {% elif item.tipo == 'EN_REVISION' %}
+                                        <i class="bi bi-eye"></i>
+                                    {% elif item.tipo == 'CAMBIO_CLIENTE' %}
+                                        <i class="bi bi-pencil-square"></i>
+                                    {% else %}
+                                        <i class="bi bi-clock-history"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="activity-content">
+                                <div class="activity-title">{{ item.titulo }}</div>
+
+                                <p class="activity-text">
+                                    {{ item.descripcion }}
+                                </p>
+
+                                {% if item.creado_por %}
+                                    <div class="text-muted small mt-1">
+                                        Registrado por: {{ item.creado_por.username }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                    {% endfor %}
+
+                </div>
+            </div>
+
+            <div class="action-footer d-flex gap-2 flex-wrap">
+                {% if es_cliente %}
+                    {% if devolucion.estado != 'APROBADO' and devolucion.estado != 'RECHAZADO' and devolucion.estado != 'CERRADO' %}
+                        <button 
+                            type="button" 
+                            class="btn btn-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#clientResponseModal"
+                        >
+                            <i class="bi bi-check-circle me-2"></i>
+                            Responder / Aprobar
+                        </button>
+
+                        <button 
+                            type="button" 
+                            class="btn btn-warning"
+                            data-bs-toggle="modal"
+                            data-bs-target="#observeReturnModal"
+                        >
+                            <i class="bi bi-chat-square-text me-2"></i>
+                            Solicitar corrección
+                        </button>
+
+                        <button 
+                            type="button" 
+                            class="btn btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#rejectReturnModal"
+                        >
+                            <i class="bi bi-x-circle me-2"></i>
+                            Rechazar
+                        </button>
+                    {% endif %}
+                {% else %}
+                    {% if devolucion.estado == 'APROBADO' %}
+                        <button 
+                            type="button" 
+                            class="btn btn-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#closeReturnModal"
+                        >
+                            <i class="bi bi-lock me-2"></i>
+                            Cerrar devolución
+                        </button>
+                    {% elif devolucion.estado == 'CERRADO' %}
+                        <button type="button" class="btn btn-dark" disabled>
+                            <i class="bi bi-lock-fill me-2"></i>
+                            Cerrada
+                        </button>
+                    {% elif devolucion.estado == 'RECHAZADO' %}
+                        <button type="button" class="btn btn-danger" disabled>
+                            <i class="bi bi-x-circle me-2"></i>
+                            Rechazada
+                        </button>
+                    {% elif devolucion.estado == 'OBSERVADO' %}
+                        <a href="{% url 'returns:return_update' devolucion.pk %}" class="btn btn-brand">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Editar corrección
+                        </a>
+
+                        <form 
+                            method="post" 
+                            action="{% url 'returns:return_send_review' devolucion.pk %}" 
+                            class="d-inline"
+                            onsubmit="return confirm('¿Confirmas que ya realizaste la corrección y deseas enviar nuevamente a revisión?');"
+                        >
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-arrow-repeat me-2"></i>
+                                Enviar a revisión
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'returns:return_update' devolucion.pk %}" class="btn btn-brand">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Editar
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                <a href="{% url 'returns:return_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Volver
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="clientResponseModal" tabindex="-1" aria-labelledby="clientResponseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'returns:return_respond' devolucion.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="clientResponseModalLabel">
+                        <i class="bi bi-chat-left-text me-2"></i>
+                        Responder devolución
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        Complete la información solicitada. Al aprobar, la devolución quedará con estado 
+                        <strong>Aprobado</strong>.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ response_form.documento_ingreso.label }}</label>
+                        {{ response_form.documento_ingreso }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ response_form.numero_dcto_estado.label }}</label>
+                        {{ response_form.numero_dcto_estado }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ response_form.respuesta_cliente.label }}</label>
+                        {{ response_form.respuesta_cliente }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ response_form.documento_respuesta_cliente.label }}</label>
+                        {{ response_form.documento_respuesta_cliente }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">{{ response_form.foto_respuesta_cliente.label }}</label>
+                        {{ response_form.foto_respuesta_cliente }}
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Aprobar devolución
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="observeReturnModal" tabindex="-1" aria-labelledby="observeReturnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'returns:return_observe' devolucion.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="observeReturnModalLabel">
+                        <i class="bi bi-chat-square-text me-2"></i>
+                        Solicitar corrección
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        Use esta opción cuando no desea aprobar ni rechazar todavía, pero necesita que el equipo interno corrija algún dato.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Observación / dato a corregir</label>
+                        <textarea 
+                            name="observacion_cliente" 
+                            class="form-control" 
+                            rows="5"
+                            placeholder="Ej: Favor cambiar Estado de Inventario de CL08 a CL05 antes de aprobar."
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-send me-2"></i>
+                        Enviar solicitud
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectReturnModal" tabindex="-1" aria-labelledby="rejectReturnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'returns:return_reject' devolucion.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectReturnModalLabel">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Rechazar devolución
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        Al rechazar, la devolución quedará con estado 
+                        <strong>Rechazado</strong>.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Motivo del rechazo</label>
+                        <textarea 
+                            name="motivo_rechazo" 
+                            class="form-control" 
+                            rows="4"
+                            placeholder="Ingrese motivo u observación del rechazo..."
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Confirmar rechazo
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="closeReturnModal" tabindex="-1" aria-labelledby="closeReturnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'returns:return_close' devolucion.pk %}">
+                {% csrf_token %}
+
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="closeReturnModalLabel">
+                        <i class="bi bi-lock me-2"></i>
+                        Cerrar devolución
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-success">
+                        Esta acción marcará la devolución como 
+                        <strong>Cerrada</strong>, indicando que ya fue ingresada/finalizada en WMS.
+                    </div>
+
+                    <p class="mb-0">
+                        ¿Confirmas que la devolución está 100% completada y registrada en WMS?
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-lock-fill me-2"></i>
+                        Confirmar cierre
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="filePreviewModalLabel">
+                    <i class="bi bi-eye me-2"></i>
+                    Vista previa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body bg-light">
+                <div class="preview-stage">
+                    <button type="button" class="preview-nav-btn preview-nav-prev" id="previewPrevBtn">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+
+                    <div id="previewContent" class="text-center w-100"></div>
+
+                    <button type="button" class="preview-nav-btn preview-nav-next" id="previewNextBtn">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between flex-wrap gap-2">
+                <div class="preview-counter" id="previewCounter">
+                    Archivo 1 de 1
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a id="previewOpenNewTab" href="#" target="_blank" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>
+                        Abrir en nueva pestaña
+                    </a>
+
+                    <a id="previewDownload" href="#" download class="btn btn-brand">
+                        <i class="bi bi-download me-2"></i>
+                        Descargar
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const previewButtons = Array.from(document.querySelectorAll('.js-preview-file'));
+
+        const previewModalElement = document.getElementById('filePreviewModal');
+        const previewModal = new bootstrap.Modal(previewModalElement);
+
+        const previewTitle = document.getElementById('filePreviewModalLabel');
+        const previewContent = document.getElementById('previewContent');
+        const previewDownload = document.getElementById('previewDownload');
+        const previewOpenNewTab = document.getElementById('previewOpenNewTab');
+        const previewCounter = document.getElementById('previewCounter');
+
+        const previewPrevBtn = document.getElementById('previewPrevBtn');
+        const previewNextBtn = document.getElementById('previewNextBtn');
+
+        let currentPreviewIndex = 0;
+
+        function getExtension(url) {
+            const cleanUrl = url.split('?')[0].split('#')[0];
+            const parts = cleanUrl.split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        }
+
+        function isImageExtension(ext) {
+            return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        }
+
+        function isPdfExtension(ext) {
+            return ext === 'pdf';
+        }
+
+        function renderPreview(index) {
+            if (!previewButtons.length) return;
+
+            if (index < 0) {
+                currentPreviewIndex = previewButtons.length - 1;
+            } else if (index >= previewButtons.length) {
+                currentPreviewIndex = 0;
+            } else {
+                currentPreviewIndex = index;
+            }
+
+            const button = previewButtons[currentPreviewIndex];
+
+            const url = button.dataset.previewUrl;
+            const title = button.dataset.previewTitle || 'Vista previa';
+            const type = button.dataset.previewType || 'document';
+            const ext = getExtension(url);
+
+            previewTitle.innerHTML = '<i class="bi bi-eye me-2"></i>' + title;
+            previewDownload.href = url;
+            previewOpenNewTab.href = url;
+
+            previewCounter.textContent = `Archivo ${currentPreviewIndex + 1} de ${previewButtons.length}`;
+
+            if (previewButtons.length <= 1) {
+                previewPrevBtn.style.display = 'none';
+                previewNextBtn.style.display = 'none';
+            } else {
+                previewPrevBtn.style.display = 'flex';
+                previewNextBtn.style.display = 'flex';
+            }
+
+            if (type === 'image' || isImageExtension(ext)) {
+                previewContent.innerHTML = `
+                    <img src="${url}" class="preview-modal-image" alt="${title}">
+                `;
+            } else if (isPdfExtension(ext)) {
+                previewContent.innerHTML = `
+                    <iframe src="${url}" class="preview-modal-frame"></iframe>
+                `;
+            } else {
+                previewContent.innerHTML = `
+                    <div class="py-5">
+                        <div class="mb-3" style="font-size:48px; color:#0B4C6F;">
+                            <i class="bi bi-file-earmark-arrow-down"></i>
+                        </div>
+                        <h5>No se puede previsualizar este formato directamente</h5>
+                        <p class="text-muted mb-0">
+                            Puedes descargar el archivo o abrirlo en una nueva pestaña.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        previewButtons.forEach(function (button, index) {
+            button.addEventListener('click', function () {
+                renderPreview(index);
+                previewModal.show();
+            });
+        });
+
+        previewPrevBtn.addEventListener('click', function () {
+            renderPreview(currentPreviewIndex - 1);
+        });
+
+        previewNextBtn.addEventListener('click', function () {
+            renderPreview(currentPreviewIndex + 1);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (!previewModalElement.classList.contains('show')) return;
+
+            if (event.key === 'ArrowLeft') {
+                renderPreview(currentPreviewIndex - 1);
+            }
+
+            if (event.key === 'ArrowRight') {
+                renderPreview(currentPreviewIndex + 1);
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

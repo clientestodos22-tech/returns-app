@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Devoluciones Return</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-dark: #063f5e;
+            --brand: #0B4C6F;
+            --brand-soft: #e8f4fa;
+            --green: #2E7D32;
+            --red: #C62828;
+            --orange: #F57C00;
+            --gray-bg: #f3f6f9;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            background: var(--gray-bg);
+            font-family: Arial, sans-serif;
+            color: #1f2933;
+            overflow-x: hidden;
+        }
+
+        .app-navbar {
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand));
+            color: white;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 800;
+            letter-spacing: .3px;
+        }
+
+        .user-pill {
+            background: rgba(255, 255, 255, 0.16);
+            color: white;
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 13px;
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 24px 32px;
+        }
+
+        .hero-card,
+        .filter-card,
+        .table-card {
+            width: 100%;
+        }
+
+        .hero-card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .page-title {
+            color: var(--brand);
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .page-subtitle {
+            color: #6b7280;
+            margin-bottom: 0;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+            height: 100%;
+        }
+
+        .kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--brand-soft);
+            color: var(--brand);
+            font-size: 20px;
+        }
+
+        .kpi-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1;
+            min-height: 32px;
+        }
+
+        .kpi-label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .table thead th {
+            background: var(--brand);
+            color: white;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .table tbody td {
+            font-size: 13px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .table-hover tbody tr:hover {
+            background: #f8fbfd;
+        }
+
+        .btn-brand {
+            background: var(--brand);
+            color: white;
+            border: none;
+            font-weight: 700;
+        }
+
+        .btn-brand:hover {
+            background: var(--brand-dark);
+            color: white;
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: white;
+            border: none;
+            font-weight: 700;
+        }
+
+        .btn-green:hover {
+            background: #1b5e20;
+            color: white;
+        }
+
+        .btn-red {
+            background: var(--red);
+            color: white;
+            border: none;
+            font-weight: 700;
+        }
+
+        .btn-red:hover {
+            background: #9f1f1f;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .action-buttons .btn {
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .modal-header {
+            background: var(--brand);
+            color: white;
+        }
+
+        .modal-title {
+            font-weight: 800;
+        }
+
+        .form-label {
+            font-weight: 700;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .live-updated {
+            animation: livePulse 0.7s ease-in-out;
+        }
+
+        @keyframes livePulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(11, 76, 111, 0.25);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 6px rgba(11, 76, 111, 0.12);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(11, 76, 111, 0);
+            }
+        }
+
+        .modal-timeline {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .modal-timeline-item {
+            display: grid;
+            grid-template-columns: 125px 44px 1fr;
+            gap: 14px;
+            position: relative;
+            padding-bottom: 18px;
+        }
+
+        .modal-timeline-time {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: right;
+            padding-top: 8px;
+            line-height: 1.3;
+        }
+
+        .modal-timeline-middle {
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+
+        .modal-timeline-middle::after {
+            content: "";
+            position: absolute;
+            top: 44px;
+            bottom: -18px;
+            width: 3px;
+            background: #e5e7eb;
+        }
+
+        .modal-timeline-item:last-child .modal-timeline-middle::after {
+            display: none;
+        }
+
+        .modal-timeline-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: var(--brand-soft);
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            font-size: 18px;
+        }
+
+        .modal-timeline-content {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+        }
+
+        .modal-timeline-title {
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .modal-timeline-text {
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .timeline-success .modal-timeline-icon {
+            background: #e8f5e9;
+            color: #2E7D32;
+        }
+
+        .timeline-danger .modal-timeline-icon {
+            background: #ffebee;
+            color: #C62828;
+        }
+
+        .timeline-warning .modal-timeline-icon {
+            background: #fff8e1;
+            color: #F57C00;
+        }
+
+        .timeline-primary .modal-timeline-icon {
+            background: var(--brand-soft);
+            color: var(--brand);
+        }
+
+
+        .detail-gallery {
+            margin-top: 24px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 18px;
+        }
+
+        .detail-gallery-title {
+            font-weight: 800;
+            color: var(--brand);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-file-card {
+            border: 1px solid #dbe3ea;
+            background: #f8fbfd;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            text-align: left;
+            padding: 0;
+            width: 100%;
+        }
+
+        .detail-file-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--brand);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+        }
+
+        .detail-file-thumb {
+            width: 100%;
+            height: 110px;
+            object-fit: cover;
+            background: #eef5f9;
+            display: block;
+        }
+
+        .detail-file-icon {
+            height: 110px;
+            background: #eef5f9;
+            color: var(--brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+        }
+
+        .detail-file-body {
+            padding: 10px;
+        }
+
+        .detail-file-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #111827;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .detail-file-subtitle {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .preview-stage {
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-modal-image {
+            max-width: 100%;
+            max-height: 72vh;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .preview-modal-frame {
+            width: 100%;
+            height: 72vh;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            background: white;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrapper {
+                padding: 14px;
+            }
+
+            .hero-card {
+                padding: 18px;
+            }
+
+            .page-title {
+                font-size: 26px;
+            }
+
+            .kpi-card {
+                padding: 14px;
+            }
+
+            .kpi-number {
+                font-size: 24px;
+            }
+
+            .table-responsive {
+                overflow: visible;
+            }
+
+            .table {
+                border-collapse: separate;
+                border-spacing: 0 12px;
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table tbody,
+            .table tr,
+            .table td {
+                display: block;
+                width: 100%;
+            }
+
+            .table tbody tr {
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 14px;
+                padding: 12px;
+                box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+            }
+
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                white-space: normal;
+                border: none;
+                border-bottom: 1px solid #eef2f6;
+                padding: 9px 4px;
+                font-size: 13px;
+                gap: 12px;
+            }
+
+            .table tbody td:last-child {
+                border-bottom: none;
+            }
+
+            .table tbody td::before {
+                content: attr(data-label);
+                font-weight: 800;
+                color: var(--brand);
+                margin-right: 16px;
+                min-width: 125px;
+            }
+
+            .action-buttons {
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+
+            .modal-dialog {
+                margin: 8px;
+            }
+
+            .modal-timeline-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .modal-timeline-time {
+                text-align: left;
+                padding-top: 0;
+            }
+
+            .modal-timeline-middle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar app-navbar px-4 py-3">
+    <div class="container-fluid px-0">
+        <span class="navbar-brand mb-0 h1">
+            <i class="bi bi-box-seam me-2"></i>
+            Returns App
+        </span>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="dropdown">
+                <button 
+                    class="btn user-pill dropdown-toggle" 
+                    type="button" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                >
+                    <i class="bi bi-person-circle me-2"></i>
+                    {{ request.user.username }}
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li>
+                        <h6 class="dropdown-header">Sesión activa</h6>
+                    </li>
+
+                    <li>
+                        <span class="dropdown-item-text">
+                            <strong>{{ request.user.username }}</strong>
+                        </span>
+                    </li>
+
+                    {% if request.user.is_staff or request.user.is_superuser %}
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <button 
+                                type="button" 
+                                class="dropdown-item"
+                                data-bs-toggle="modal"
+                                data-bs-target="#createClientUserModal"
+                            >
+                                <i class="bi bi-person-plus me-2"></i>
+                                Crear usuario cliente
+                            </button>
+                        </li>
+                    {% endif %}
+
+                    <li><hr class="dropdown-divider"></li>
+
+                    <li>
+                        <form method="post" action="{% url 'logout' %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-red btn-sm">
+                    <i class="bi bi-box-arrow-right me-1"></i>
+                    Cerrar sesión
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="main-wrapper">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="hero-card mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-8">
+                <h1 class="page-title">Devoluciones Return</h1>
+                <p class="page-subtitle">
+                    Registro, control y seguimiento de devoluciones con documento, foto y trazabilidad.
+                </p>
+            </div>
+
+            <div class="col-lg-4 text-lg-end">
+                {% if not es_cliente %}
+                    <button 
+                        type="button" 
+                        class="btn btn-brand btn-lg"
+                        data-bs-toggle="modal"
+                        data-bs-target="#createReturnModal"
+                    >
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Nueva devolución
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-total">{{ total_devoluciones|default:0 }}</div>
+                        <div class="kpi-label">Total devoluciones</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-archive"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-recibidas">{{ total_recibidas|default:0 }}</div>
+                        <div class="kpi-label">Recibidas</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-inbox"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-revision">{{ total_revision|default:0 }}</div>
+                        <div class="kpi-label">En revisión</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-search"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-observadas">{{ total_observadas|default:0 }}</div>
+                        <div class="kpi-label">Correcciones</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-chat-square-text"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-aprobadas">{{ total_aprobadas|default:0 }}</div>
+                        <div class="kpi-label">Aprobadas</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-rechazadas">{{ total_rechazadas|default:0 }}</div>
+                        <div class="kpi-label">Rechazadas</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-x-circle"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-xl">
+            <div class="kpi-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-number" id="kpi-cerradas">{{ total_cerradas|default:0 }}</div>
+                        <div class="kpi-label">Cerradas</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-check2-circle"></i></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="filter-card mb-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-6">
+                <label class="form-label">Buscar</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        class="form-control"
+                        placeholder="Cliente, SKU, documento, serie, ubicación..."
+                        value="{{ query }}"
+                    >
+                </div>
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    {% for value, label in estado_choices %}
+                        <option value="{{ value }}" {% if estado == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-green w-100">
+                    <i class="bi bi-funnel me-1"></i>
+                    Filtrar
+                </button>
+
+                <a href="{% url 'returns:return_list' %}" class="btn btn-outline-secondary w-100">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom">
+            <div>
+                <strong>Listado de devoluciones</strong>
+                <div class="text-muted small">
+                    Registros encontrados: <span id="records-count">{{ total_filtradas|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Correlativo</th>
+                        <th>Fecha Recepción</th>
+                        <th>N° Documento</th>
+                        <th>Documento ingreso</th>
+                        <th>Cliente</th>
+                        <th>SKU</th>
+                        <th>Cantidad</th>
+                        <th>Serie</th>
+                        <th>Estado Inventario</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="returns-table-body">
+                    {% for item in devoluciones %}
+                        <tr id="return-row-{{ item.id }}">
+                            <td data-label="Correlativo"><strong>{{ item.correlativo }}</strong></td>
+                            <td data-label="Fecha recepción">{{ item.fecha_recepcion }}</td>
+                            <td data-label="N° Documento"><strong>{{ item.numero_documento }}</strong></td>
+                            <td data-label="Documento ingreso">{{ item.documento_ingreso|default:"None" }}</td>
+                            <td data-label="Cliente">{{ item.cliente }}</td>
+                            <td data-label="SKU"><span class="badge text-bg-light border">{{ item.sku }}</span></td>
+                            <td data-label="Cantidad">{{ item.cantidad }}</td>
+                            <td data-label="Serie">{{ item.serie|default:"-" }}</td>
+                            <td data-label="Estado inventario">{{ item.numero_dcto_estado|default:"-" }}</td>
+
+                            <td data-label="Estado">
+                                {% if item.estado == 'RECIBIDO' %}
+                                    <span class="badge rounded-pill text-bg-primary">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'EN_REVISION' %}
+                                    <span class="badge rounded-pill text-bg-warning">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'OBSERVADO' %}
+                                    <span class="badge rounded-pill text-bg-warning">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'APROBADO' %}
+                                    <span class="badge rounded-pill text-bg-success">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'RECHAZADO' %}
+                                    <span class="badge rounded-pill text-bg-danger">{{ item.get_estado_display }}</span>
+                                {% elif item.estado == 'CERRADO' %}
+                                    <span class="badge rounded-pill text-bg-dark">{{ item.get_estado_display }}</span>
+                                {% else %}
+                                    <span class="badge rounded-pill text-bg-secondary">{{ item.get_estado_display }}</span>
+                                {% endif %}
+                            </td>
+
+                            <td data-label="Acciones">
+                                <div class="action-buttons">
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-outline-primary btn-sm js-open-return-modal"
+                                        data-id="{{ item.id }}"
+                                        data-correlativo="{{ item.correlativo }}"
+                                        data-fecha="{{ item.fecha_recepcion }}"
+                                        data-fecha-iso="{{ item.fecha_recepcion|date:'Y-m-d' }}"
+                                        data-numero-documento="{{ item.numero_documento }}"
+                                        data-documento-ingreso="{{ item.documento_ingreso|default:'' }}"
+                                        data-cliente="{{ item.cliente }}"
+                                        data-sku="{{ item.sku }}"
+                                        data-cantidad="{{ item.cantidad }}"
+                                        data-serie="{{ item.serie|default:'' }}"
+                                        data-codigo-numerico="{{ item.codigo_numerico|default:'' }}"
+                                        data-ubicacion="{{ item.ubicacion|default:'' }}"
+                                        data-estado-inventario="{{ item.numero_dcto_estado|default:'' }}"
+                                        data-estado="{{ item.estado }}"
+                                        data-estado-display="{{ item.get_estado_display }}"
+                                        data-observaciones="{{ item.observaciones|default:'' }}"
+                                        data-respond-url="{% url 'returns:return_respond' item.pk %}"
+                                        data-observe-url="{% url 'returns:return_observe' item.pk %}"
+                                        data-reject-url="{% url 'returns:return_reject' item.pk %}"
+                                        data-close-url="{% url 'returns:return_close' item.pk %}"
+                                        data-send-review-url="{% url 'returns:return_send_review' item.pk %}"
+                                        data-update-url="{% url 'returns:return_update' item.pk %}"
+                                        data-timeline-url="{% url 'returns:return_timeline_feed' item.pk %}"
+                                    >
+                                        <i class="bi bi-window"></i>
+                                        Abrir
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="11">
+                                <div class="empty-state">
+                                    <i class="bi bi-inbox"></i>
+                                    <h5>No hay devoluciones registradas</h5>
+                                    <p class="mb-0">No existen registros para mostrar.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% if not es_cliente %}
+<div class="modal fade" id="createReturnModal" tabindex="-1" aria-labelledby="createReturnModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'returns:return_create' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createReturnModalLabel">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Registrar devolución
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="alert alert-info d-flex align-items-center mb-3">
+                    <i class="bi bi-person-circle me-2"></i>
+                    <div>
+                        Responsable de creación:
+                        <strong>
+                            {% if request.user.get_full_name %}
+                                {{ request.user.get_full_name }}
+                            {% else %}
+                                {{ request.user.username }}
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.fecha_recepcion.label }}</label>
+                            {{ form.fecha_recepcion }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.numero_documento.label }}</label>
+                            {{ form.numero_documento }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.documento_ingreso.label }}</label>
+                            {{ form.documento_ingreso }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.cliente.label }}</label>
+                            {{ form.cliente }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.sku.label }}</label>
+                            {{ form.sku }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.cantidad.label }}</label>
+                            {{ form.cantidad }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.codigo_numerico.label }}</label>
+                            {{ form.codigo_numerico }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.serie.label }}</label>
+                            {{ form.serie }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.ubicacion.label }}</label>
+                            {{ form.ubicacion }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">{{ form.numero_dcto_estado.label }}</label>
+                            {{ form.numero_dcto_estado }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Estado inicial</label>
+                            <input type="text" class="form-control" value="Recibido" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.documentos_adjuntos.label }}</label>
+                            {{ form.documentos_adjuntos }}
+                            <div class="form-text">Puedes seleccionar varios documentos a la vez.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">{{ form.fotos_evidencia.label }}</label>
+                            {{ form.fotos_evidencia }}
+                            <div class="form-text">Puedes seleccionar varias fotos a la vez.</div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">{{ form.observaciones.label }}</label>
+                            {{ form.observaciones }}
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-green">
+                        <i class="bi bi-save me-2"></i>
+                        Guardar devolución
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="modal fade" id="createClientUserModal" tabindex="-1" aria-labelledby="createClientUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'returns:user_create' %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createClientUserModalLabel">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Crear usuario cliente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="alert alert-info">
+                        Este usuario quedará asignado automáticamente al rol <strong>Cliente</strong>.
+                    </div>
+
+                    {% if user_form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ user_form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ user_form.username.label }}</label>
+                            {{ user_form.username }}
+                            {% if user_form.username.errors %}
+                                <div class="text-danger small mt-1">{{ user_form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">{{ user_form.first_name.label }}</label>
+                            {{ user_form.first_name }}
+                            {% if user_form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ user_form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">{{ user_form.email.label }}</label>
+                            {{ user_form.email }}
+                            {% if user_form.email.errors %}
+                                <div class="text-danger small mt-1">{{ user_form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">{{ user_form.password1.label }}</label>
+                            {{ user_form.password1 }}
+                            {% if user_form.password1.errors %}
+                                <div class="text-danger small mt-1">{{ user_form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">{{ user_form.password2.label }}</label>
+                            {{ user_form.password2 }}
+                            {% if user_form.password2.errors %}
+                                <div class="text-danger small mt-1">{{ user_form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-brand">
+                        <i class="bi bi-save me-2"></i>
+                        Crear usuario
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="returnActionModal" tabindex="-1" aria-labelledby="returnActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="returnActionModalLabel">
+                    <i class="bi bi-box-seam me-2"></i>
+                    Gestión de devolución
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="alert alert-info">
+                    <strong>Correlativo:</strong> <span id="modal-correlativo"></span>
+                    <span class="ms-3">
+                        <strong>Estado:</strong> <span id="modal-estado" class="badge rounded-pill"></span>
+                    </span>
+                </div>
+
+                <ul class="nav nav-tabs mb-3" role="tablist">
+
+                    <li class="nav-item">
+                        <button class="nav-link active" id="tabDetalleBtn" data-bs-toggle="tab" data-bs-target="#tabDetalle" type="button">
+                            <i class="bi bi-eye me-1"></i>
+                            Detalle
+                        </button>
+                    </li>
+
+                    {% if es_cliente %}
+                        <li class="nav-item" id="tabClienteActions">
+                            <button class="nav-link" id="tabClienteBtn" data-bs-toggle="tab" data-bs-target="#tabCliente" type="button">
+                                <i class="bi bi-chat-left-text me-1"></i>
+                                Responder
+                            </button>
+                        </li>
+
+                        <li class="nav-item">
+                            <button class="nav-link" id="tabTimelineBtn" data-bs-toggle="tab" data-bs-target="#tabTimeline" type="button">
+                                <i class="bi bi-clock-history me-1"></i>
+                                Timeline
+                            </button>
+                        </li>
+                    {% else %}
+                        <li class="nav-item" id="tabAdminActions">
+                            <button class="nav-link" id="tabAdminBtn" data-bs-toggle="tab" data-bs-target="#tabAdmin" type="button">
+                                <i class="bi bi-tools me-1"></i>
+                                Administración
+                            </button>
+                        </li>
+
+                        <li class="nav-item">
+                            <button class="nav-link" id="tabTimelineBtn" data-bs-toggle="tab" data-bs-target="#tabTimeline" type="button">
+                                <i class="bi bi-clock-history me-1"></i>
+                                Timeline
+                            </button>
+                        </li>
+                    {% endif %}
+
+                </ul>
+
+                <div class="tab-content">
+
+                    <div class="tab-pane fade show active" id="tabDetalle">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <strong>Fecha recepción</strong>
+                                <div id="detail-fecha"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>N° Documento</strong>
+                                <div id="detail-numero-documento"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>Documento ingreso / NC</strong>
+                                <div id="detail-documento-ingreso"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>Cliente</strong>
+                                <div id="detail-cliente"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>SKU</strong>
+                                <div id="detail-sku"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>Cantidad</strong>
+                                <div id="detail-cantidad"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>Serie</strong>
+                                <div id="detail-serie"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>Estado inventario</strong>
+                                <div id="detail-estado-inventario"></div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <strong>Ubicación</strong>
+                                <div id="detail-ubicacion"></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-gallery">
+                            <div class="detail-gallery-title">
+                                <i class="bi bi-images"></i>
+                                Galería de documentos y evidencias
+                            </div>
+
+                            <div id="detailGalleryEmpty" class="alert alert-secondary mb-0">
+                                Esta devolución no tiene documentos ni fotos cargadas.
+                            </div>
+
+                            <div id="detailGalleryGrid" class="detail-gallery-grid"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tabAdmin">
+                        <form id="editForm" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                            <h5 class="mb-3">Editar devolución</h5>
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Fecha recepción</label>
+                                    <input type="date" name="fecha_recepcion" id="edit-fecha" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">N° Documento</label>
+                                    <input type="text" name="numero_documento" id="edit-numero-documento" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Documento ingreso / NC</label>
+                                    <input type="text" name="documento_ingreso" id="edit-documento-ingreso" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Cliente</label>
+                                    <input type="text" name="cliente" id="edit-cliente" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">SKU</label>
+                                    <input type="text" name="sku" id="edit-sku" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Cantidad</label>
+                                    <input type="number" name="cantidad" id="edit-cantidad" class="form-control" min="1">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Código numérico</label>
+                                    <input type="text" name="codigo_numerico" id="edit-codigo-numerico" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Serie</label>
+                                    <input type="text" name="serie" id="edit-serie" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Ubicación</label>
+                                    <input type="text" name="ubicacion" id="edit-ubicacion" class="form-control">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Estado inventario</label>
+                                    <input type="text" name="numero_dcto_estado" id="edit-estado-inventario" class="form-control">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Observaciones internas</label>
+                                    <textarea name="observaciones" id="edit-observaciones" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-2"></i>
+                                    Guardar cambios
+                                </button>
+                            </div>
+                        </form>
+
+                        <hr>
+
+                        <form id="sendReviewForm" method="post" class="d-none">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-arrow-repeat me-2"></i>
+                                Enviar nuevamente a revisión
+                            </button>
+                        </form>
+
+                        <form id="closeForm" method="post" class="d-none mt-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-lock me-2"></i>
+                                Cerrar devolución
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade" id="tabCliente">
+
+                        <div id="clienteFinalAlert" class="alert alert-secondary d-none">
+                            Esta devolución ya tiene un estado final y no permite nuevas respuestas.
+                        </div>
+
+                        <div id="clienteForms">
+
+                            <h5 class="mb-3">Aprobar devolución</h5>
+
+                            <form id="approveForm" method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Documento de ingreso / NC cliente</label>
+                                        <input type="text" name="documento_ingreso" id="approve-documento-ingreso" class="form-control">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Estado de Inventario</label>
+                                        <input type="text" name="numero_dcto_estado" id="approve-estado-inventario" class="form-control">
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Observaciones de esta respuesta</label>
+                                        <textarea name="respuesta_cliente" class="form-control" rows="3" placeholder="Opcional"></textarea>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Documento adjunto</label>
+                                        <input type="file" name="documento_respuesta_cliente" class="form-control">
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Foto evidencia</label>
+                                        <input type="file" name="foto_respuesta_cliente" class="form-control" accept="image/*">
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        Aprobar devolución
+                                    </button>
+                                </div>
+                            </form>
+
+                            <hr>
+
+                            <h5 class="mb-3">Solicitar corrección</h5>
+
+                            <form id="observeForm" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                                <label class="form-label">Observación / dato a corregir</label>
+                                <textarea 
+                                    name="observacion_cliente" 
+                                    class="form-control" 
+                                    rows="3"
+                                    placeholder="Ej: Favor corregir el SKU antes de aprobar."
+                                    required
+                                ></textarea>
+
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-chat-square-text me-2"></i>
+                                        Enviar corrección
+                                    </button>
+                                </div>
+                            </form>
+
+                            <hr>
+
+                            <h5 class="mb-3">Rechazar devolución</h5>
+
+                            <form id="rejectForm" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                                <label class="form-label">Motivo del rechazo</label>
+                                <textarea 
+                                    name="motivo_rechazo" 
+                                    class="form-control" 
+                                    rows="3"
+                                    placeholder="Ingrese motivo del rechazo"
+                                    required
+                                ></textarea>
+
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-x-circle me-2"></i>
+                                        Rechazar devolución
+                                    </button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tabTimeline">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="mb-0">
+                                    <i class="bi bi-clock-history me-2"></i>
+                                    Timeline de devolución
+                                </h5>
+                                <div class="text-muted small">
+                                    Registro completo de acciones, cambios y usuarios.
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="refreshTimelineBtn">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Actualizar
+                            </button>
+                        </div>
+
+                        <div id="timelineLoading" class="alert alert-info">
+                            Cargando historial...
+                        </div>
+
+                        <div id="timelineEmpty" class="alert alert-secondary d-none">
+                            No hay movimientos registrados todavía.
+                        </div>
+
+                        <div class="modal-timeline" id="modalTimelineContent"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="filePreviewModalLabel">
+                    <i class="bi bi-eye me-2"></i>
+                    Vista previa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body bg-light">
+                <div class="preview-stage" id="previewContent"></div>
+            </div>
+
+            <div class="modal-footer">
+                <a id="previewOpenNewTab" href="#" target="_blank" class="btn btn-outline-secondary">
+                    <i class="bi bi-box-arrow-up-right me-2"></i>
+                    Abrir en nueva pestaña
+                </a>
+
+                <a id="previewDownload" href="#" download class="btn btn-brand">
+                    <i class="bi bi-download me-2"></i>
+                    Descargar
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% if open_user_modal %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('createClientUserModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    });
+</script>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const liveFeedUrl = "{% url 'returns:return_live_feed' %}";
+        const tableBody = document.getElementById('returns-table-body');
+        const isCliente = "{{ es_cliente|yesno:'true,false' }}" === "true";
+
+        const actionModalElement = document.getElementById('returnActionModal');
+        const actionModal = new bootstrap.Modal(actionModalElement);
+
+        let currentTimelineUrl = null;
+        let returnsCache = {};
+        let currentGallery = [];
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function getBadgeClass(estado) {
+            if (estado === 'RECIBIDO') return 'badge rounded-pill text-bg-primary';
+            if (estado === 'EN_REVISION') return 'badge rounded-pill text-bg-warning';
+            if (estado === 'OBSERVADO') return 'badge rounded-pill text-bg-warning';
+            if (estado === 'APROBADO') return 'badge rounded-pill text-bg-success';
+            if (estado === 'RECHAZADO') return 'badge rounded-pill text-bg-danger';
+            if (estado === 'CERRADO') return 'badge rounded-pill text-bg-dark';
+
+            return 'badge rounded-pill text-bg-secondary';
+        }
+
+        function getTimelineClass(color) {
+            if (color === 'success') return 'timeline-success';
+            if (color === 'danger') return 'timeline-danger';
+            if (color === 'warning') return 'timeline-warning';
+
+            return 'timeline-primary';
+        }
+
+        function updateCounter(id, value) {
+            const element = document.getElementById(id);
+            if (!element) return;
+
+            const safeValue = value ?? 0;
+
+            if (element.textContent.trim() !== String(safeValue)) {
+                element.textContent = safeValue;
+                element.classList.add('live-updated');
+
+                setTimeout(function () {
+                    element.classList.remove('live-updated');
+                }, 800);
+            }
+        }
+
+        function renderTimeline(items) {
+            const timelineContent = document.getElementById('modalTimelineContent');
+            const timelineLoading = document.getElementById('timelineLoading');
+            const timelineEmpty = document.getElementById('timelineEmpty');
+
+            timelineLoading.classList.add('d-none');
+
+            if (!items || !items.length) {
+                timelineContent.innerHTML = '';
+                timelineEmpty.classList.remove('d-none');
+                return;
+            }
+
+            timelineEmpty.classList.add('d-none');
+
+            timelineContent.innerHTML = items.map(function (item) {
+                return `
+                    <div class="modal-timeline-item ${getTimelineClass(item.color)}">
+                        <div class="modal-timeline-time">
+                            ${escapeHtml(item.fecha)}
+                        </div>
+
+                        <div class="modal-timeline-middle">
+                            <div class="modal-timeline-icon">
+                                <i class="bi ${escapeHtml(item.icon)}"></i>
+                            </div>
+                        </div>
+
+                        <div class="modal-timeline-content">
+                            <div class="modal-timeline-title">
+                                ${escapeHtml(item.titulo)}
+                            </div>
+
+                            <p class="modal-timeline-text">
+                                ${escapeHtml(item.descripcion)}
+                            </p>
+
+                            <div class="text-muted small mt-1">
+                                Registrado por: ${escapeHtml(item.usuario)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadTimeline(url) {
+            currentTimelineUrl = url;
+
+            const timelineContent = document.getElementById('modalTimelineContent');
+            const timelineLoading = document.getElementById('timelineLoading');
+            const timelineEmpty = document.getElementById('timelineEmpty');
+
+            timelineContent.innerHTML = '';
+            timelineEmpty.classList.add('d-none');
+            timelineLoading.classList.remove('d-none');
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('No se pudo cargar el timeline');
+                }
+
+                return response.json();
+            })
+            .then(function (data) {
+                renderTimeline(data.items);
+            })
+            .catch(function (error) {
+                console.warn(error);
+                timelineLoading.classList.add('d-none');
+                timelineContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        No se pudo cargar el timeline de esta devolución.
+                    </div>
+                `;
+            });
+        }
+
+
+        function getExtension(url) {
+            const cleanUrl = String(url || '').split('?')[0].split('#')[0];
+            const parts = cleanUrl.split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        }
+
+        function isImageFile(file) {
+            const ext = getExtension(file.url);
+            return file.tipo === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        }
+
+        function isPdfFile(file) {
+            return getExtension(file.url) === 'pdf';
+        }
+
+        function renderDetailGallery(galeria) {
+            const grid = document.getElementById('detailGalleryGrid');
+            const empty = document.getElementById('detailGalleryEmpty');
+
+            if (!grid || !empty) return;
+
+            currentGallery = Array.isArray(galeria) ? galeria : [];
+
+            if (!currentGallery.length) {
+                grid.innerHTML = '';
+                empty.classList.remove('d-none');
+                return;
+            }
+
+            empty.classList.add('d-none');
+
+            grid.innerHTML = currentGallery.map(function (file, index) {
+                const title = file.titulo || 'Archivo';
+                const subtitle = file.nombre || 'Click para previsualizar';
+
+                if (isImageFile(file)) {
+                    return `
+                        <button 
+                            type="button"
+                            class="detail-file-card js-preview-detail-file"
+                            data-index="${index}"
+                        >
+                            <img src="${escapeHtml(file.url)}" class="detail-file-thumb" alt="${escapeHtml(title)}">
+
+                            <div class="detail-file-body">
+                                <div class="detail-file-title">${escapeHtml(title)}</div>
+                                <div class="detail-file-subtitle">${escapeHtml(subtitle)}</div>
+                            </div>
+                        </button>
+                    `;
+                }
+
+                return `
+                    <button 
+                        type="button"
+                        class="detail-file-card js-preview-detail-file"
+                        data-index="${index}"
+                    >
+                        <div class="detail-file-icon">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+
+                        <div class="detail-file-body">
+                            <div class="detail-file-title">${escapeHtml(title)}</div>
+                            <div class="detail-file-subtitle">${escapeHtml(subtitle)}</div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function openPreviewFile(index) {
+            const file = currentGallery[index];
+
+            if (!file) return;
+
+            const modalElement = document.getElementById('filePreviewModal');
+            const modal = new bootstrap.Modal(modalElement);
+
+            const title = document.getElementById('filePreviewModalLabel');
+            const content = document.getElementById('previewContent');
+            const openNewTab = document.getElementById('previewOpenNewTab');
+            const download = document.getElementById('previewDownload');
+
+            title.innerHTML = `<i class="bi bi-eye me-2"></i>${escapeHtml(file.titulo || 'Vista previa')}`;
+            openNewTab.href = file.url;
+            download.href = file.url;
+
+            if (isImageFile(file)) {
+                content.innerHTML = `
+                    <img src="${escapeHtml(file.url)}" class="preview-modal-image" alt="${escapeHtml(file.titulo || 'Foto')}">
+                `;
+            } else if (isPdfFile(file)) {
+                content.innerHTML = `
+                    <iframe src="${escapeHtml(file.url)}" class="preview-modal-frame"></iframe>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="mb-3" style="font-size:52px; color:#0B4C6F;">
+                            <i class="bi bi-file-earmark-arrow-down"></i>
+                        </div>
+                        <h5>No se puede previsualizar este formato directamente</h5>
+                        <p class="text-muted mb-0">
+                            Puedes descargar el archivo o abrirlo en una nueva pestaña.
+                        </p>
+                    </div>
+                `;
+            }
+
+            modal.show();
+        }
+
+        function renderRows(items) {
+            if (!tableBody) return;
+
+            if (!items.length) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="11">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <h5>No hay devoluciones registradas</h5>
+                                <p class="mb-0">No existen registros para mostrar con los filtros actuales.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const rowsHtml = items.map(function (item) {
+                const badgeClass = getBadgeClass(item.estado);
+
+                return `
+                    <tr id="return-row-${item.id}">
+                        <td data-label="Correlativo"><strong>${escapeHtml(item.correlativo)}</strong></td>
+                        <td data-label="Fecha recepción">${escapeHtml(item.fecha_recepcion)}</td>
+                        <td data-label="N° Documento"><strong>${escapeHtml(item.numero_documento)}</strong></td>
+                        <td data-label="Documento ingreso">${escapeHtml(item.documento_ingreso)}</td>
+                        <td data-label="Cliente">${escapeHtml(item.cliente)}</td>
+                        <td data-label="SKU">
+                            <span class="badge text-bg-light border">
+                                ${escapeHtml(item.sku)}
+                            </span>
+                        </td>
+                        <td data-label="Cantidad">${escapeHtml(item.cantidad)}</td>
+                        <td data-label="Serie">${escapeHtml(item.serie)}</td>
+                        <td data-label="Estado inventario">${escapeHtml(item.estado_inventario)}</td>
+                        <td data-label="Estado">
+                            <span class="${badgeClass}">
+                                ${escapeHtml(item.estado_display)}
+                            </span>
+                        </td>
+                        <td data-label="Acciones">
+                            <div class="action-buttons">
+                                <button 
+                                    type="button"
+                                    class="btn btn-outline-primary btn-sm js-open-return-modal"
+                                    data-id="${escapeHtml(item.id)}"
+                                    data-correlativo="${escapeHtml(item.correlativo)}"
+                                    data-fecha="${escapeHtml(item.fecha_recepcion)}"
+                                    data-fecha-iso="${escapeHtml(item.fecha_iso)}"
+                                    data-numero-documento="${escapeHtml(item.numero_documento)}"
+                                    data-documento-ingreso="${escapeHtml(item.documento_ingreso === 'None' ? '' : item.documento_ingreso)}"
+                                    data-cliente="${escapeHtml(item.cliente)}"
+                                    data-sku="${escapeHtml(item.sku)}"
+                                    data-cantidad="${escapeHtml(item.cantidad)}"
+                                    data-serie="${escapeHtml(item.serie)}"
+                                    data-codigo-numerico="${escapeHtml(item.codigo_numerico)}"
+                                    data-ubicacion="${escapeHtml(item.ubicacion)}"
+                                    data-estado-inventario="${escapeHtml(item.estado_inventario)}"
+                                    data-estado="${escapeHtml(item.estado)}"
+                                    data-estado-display="${escapeHtml(item.estado_display)}"
+                                    data-observaciones="${escapeHtml(item.observaciones)}"
+                                    data-respond-url="${escapeHtml(item.respond_url)}"
+                                    data-observe-url="${escapeHtml(item.observe_url)}"
+                                    data-reject-url="${escapeHtml(item.reject_url)}"
+                                    data-close-url="${escapeHtml(item.close_url)}"
+                                    data-send-review-url="${escapeHtml(item.send_review_url)}"
+                                    data-update-url="${escapeHtml(item.update_url)}"
+                                    data-timeline-url="${escapeHtml(item.timeline_url)}"
+                                >
+                                    <i class="bi bi-window"></i>
+                                    Abrir
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (tableBody.innerHTML.trim() !== rowsHtml.trim()) {
+                tableBody.innerHTML = rowsHtml;
+            }
+        }
+
+        function syncLiveData() {
+            const params = new URLSearchParams(window.location.search);
+            const url = liveFeedUrl + '?' + params.toString();
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Error consultando live feed');
+                }
+
+                return response.json();
+            })
+            .then(function (data) {
+                updateCounter('kpi-total', data.counts.total ?? 0);
+                updateCounter('kpi-recibidas', data.counts.recibidas ?? 0);
+                updateCounter('kpi-revision', data.counts.revision ?? 0);
+                updateCounter('kpi-observadas', data.counts.observadas ?? 0);
+                updateCounter('kpi-aprobadas', data.counts.aprobadas ?? 0);
+                updateCounter('kpi-rechazadas', data.counts.rechazadas ?? 0);
+                updateCounter('kpi-cerradas', data.counts.cerradas ?? 0);
+
+                const recordsCount = document.getElementById('records-count');
+
+                if (recordsCount) {
+                    recordsCount.textContent = data.counts.filtradas ?? 0;
+                }
+
+                returnsCache = {};
+
+                (data.items || []).forEach(function (item) {
+                    returnsCache[String(item.id)] = item;
+                });
+
+                renderRows(data.items || []);
+            })
+            .catch(function (error) {
+                console.warn('No se pudo sincronizar la tabla:', error);
+            });
+        }
+
+        document.addEventListener('click', function (event) {
+            const button = event.target.closest('.js-open-return-modal');
+
+            if (!button) return;
+
+            const estado = button.dataset.estado;
+            const cachedItem = returnsCache[String(button.dataset.id)] || {};
+
+            const detalleTabButton = document.getElementById('tabDetalleBtn');
+
+            if (detalleTabButton) {
+                const detalleTab = new bootstrap.Tab(detalleTabButton);
+                detalleTab.show();
+            }
+
+            document.getElementById('modal-correlativo').textContent = button.dataset.correlativo;
+
+            const estadoBadge = document.getElementById('modal-estado');
+            estadoBadge.textContent = button.dataset.estadoDisplay;
+            estadoBadge.className = getBadgeClass(estado);
+
+            document.getElementById('detail-fecha').textContent = button.dataset.fecha || '-';
+            document.getElementById('detail-numero-documento').textContent = button.dataset.numeroDocumento || '-';
+            document.getElementById('detail-documento-ingreso').textContent = button.dataset.documentoIngreso || 'Pendiente';
+            document.getElementById('detail-cliente').textContent = button.dataset.cliente || '-';
+            document.getElementById('detail-sku').textContent = button.dataset.sku || '-';
+            document.getElementById('detail-cantidad').textContent = button.dataset.cantidad || '-';
+            document.getElementById('detail-serie').textContent = button.dataset.serie || '-';
+            document.getElementById('detail-estado-inventario').textContent = button.dataset.estadoInventario || '-';
+            document.getElementById('detail-ubicacion').textContent = button.dataset.ubicacion || '-';
+
+            const approveForm = document.getElementById('approveForm');
+            const observeForm = document.getElementById('observeForm');
+            const rejectForm = document.getElementById('rejectForm');
+            const closeForm = document.getElementById('closeForm');
+            const sendReviewForm = document.getElementById('sendReviewForm');
+            const editForm = document.getElementById('editForm');
+
+            if (approveForm) approveForm.action = button.dataset.respondUrl;
+            if (observeForm) observeForm.action = button.dataset.observeUrl;
+            if (rejectForm) rejectForm.action = button.dataset.rejectUrl;
+            if (closeForm) closeForm.action = button.dataset.closeUrl;
+            if (sendReviewForm) sendReviewForm.action = button.dataset.sendReviewUrl;
+            if (editForm) editForm.action = button.dataset.updateUrl;
+
+            const approveDocumentoIngreso = document.getElementById('approve-documento-ingreso');
+            const approveEstadoInventario = document.getElementById('approve-estado-inventario');
+
+            if (approveDocumentoIngreso) {
+                approveDocumentoIngreso.value = button.dataset.documentoIngreso || '';
+            }
+
+            if (approveEstadoInventario) {
+                approveEstadoInventario.value = button.dataset.estadoInventario || '';
+            }
+
+            const editFecha = document.getElementById('edit-fecha');
+            const editNumeroDocumento = document.getElementById('edit-numero-documento');
+            const editDocumentoIngreso = document.getElementById('edit-documento-ingreso');
+            const editCliente = document.getElementById('edit-cliente');
+            const editSku = document.getElementById('edit-sku');
+            const editCantidad = document.getElementById('edit-cantidad');
+            const editCodigoNumerico = document.getElementById('edit-codigo-numerico');
+            const editSerie = document.getElementById('edit-serie');
+            const editUbicacion = document.getElementById('edit-ubicacion');
+            const editEstadoInventario = document.getElementById('edit-estado-inventario');
+            const editObservaciones = document.getElementById('edit-observaciones');
+
+            if (editFecha) editFecha.value = button.dataset.fechaIso || '';
+            if (editNumeroDocumento) editNumeroDocumento.value = button.dataset.numeroDocumento || '';
+            if (editDocumentoIngreso) editDocumentoIngreso.value = button.dataset.documentoIngreso || '';
+            if (editCliente) editCliente.value = button.dataset.cliente || '';
+            if (editSku) editSku.value = button.dataset.sku || '';
+            if (editCantidad) editCantidad.value = button.dataset.cantidad || '';
+            if (editCodigoNumerico) editCodigoNumerico.value = button.dataset.codigoNumerico || '';
+            if (editSerie) editSerie.value = button.dataset.serie || '';
+            if (editUbicacion) editUbicacion.value = button.dataset.ubicacion || '';
+            if (editEstadoInventario) editEstadoInventario.value = button.dataset.estadoInventario || '';
+            if (editObservaciones) editObservaciones.value = button.dataset.observaciones || '';
+
+            const clienteForms = document.getElementById('clienteForms');
+            const clienteFinalAlert = document.getElementById('clienteFinalAlert');
+            const tabClienteActions = document.getElementById('tabClienteActions');
+            const tabAdminActions = document.getElementById('tabAdminActions');
+
+            if (isCliente) {
+                if (tabClienteActions) tabClienteActions.classList.remove('d-none');
+                if (tabAdminActions) tabAdminActions.classList.add('d-none');
+
+                if (['APROBADO', 'RECHAZADO', 'CERRADO'].includes(estado)) {
+                    if (clienteForms) clienteForms.classList.add('d-none');
+                    if (clienteFinalAlert) clienteFinalAlert.classList.remove('d-none');
+                } else {
+                    if (clienteForms) clienteForms.classList.remove('d-none');
+                    if (clienteFinalAlert) clienteFinalAlert.classList.add('d-none');
+                }
+            } else {
+                if (tabClienteActions) tabClienteActions.classList.add('d-none');
+                if (tabAdminActions) tabAdminActions.classList.remove('d-none');
+
+                if (sendReviewForm) {
+                    sendReviewForm.classList.toggle('d-none', estado !== 'OBSERVADO');
+                }
+
+                if (closeForm) {
+                    closeForm.classList.toggle('d-none', estado !== 'APROBADO');
+                }
+            }
+
+            renderDetailGallery(cachedItem.galeria || []);
+
+            if (button.dataset.timelineUrl) {
+                loadTimeline(button.dataset.timelineUrl);
+            }
+
+            actionModal.show();
+        });
+
+
+        document.addEventListener('click', function (event) {
+            const button = event.target.closest('.js-preview-detail-file');
+
+            if (!button) return;
+
+            const index = Number(button.dataset.index);
+            openPreviewFile(index);
+        });
+
+        const refreshTimelineBtn = document.getElementById('refreshTimelineBtn');
+
+        if (refreshTimelineBtn) {
+            refreshTimelineBtn.addEventListener('click', function () {
+                if (currentTimelineUrl) {
+                    loadTimeline(currentTimelineUrl);
+                }
+            });
+        }
+
+        syncLiveData();
+
+        setInterval(syncLiveData, 1500);
+    });
+</script>
+
+</body>
+</html>

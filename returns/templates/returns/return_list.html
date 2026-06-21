@@ -472,6 +472,55 @@
             min-height: 0;
         }
 
+        .series-capture-card {
+            border: 1px solid #dbe3ea;
+            background: #f8fbfd;
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .series-list {
+            min-height: 42px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 10px;
+            background: #ffffff;
+        }
+
+        .series-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--brand-soft);
+            color: var(--brand);
+            border: 1px solid #cfe7f3;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 800;
+            margin: 3px;
+        }
+
+        .series-badge button {
+            border: none;
+            background: transparent;
+            color: var(--red);
+            font-weight: 900;
+            line-height: 1;
+            padding: 0;
+        }
+
+        #scannerContainer {
+            border: 1px solid #dbe3ea;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #111827;
+        }
+
+        #reader {
+            width: 100%;
+        }
+
         @media (max-width: 768px) {
             .main-wrapper {
                 padding: 14px;
@@ -910,7 +959,7 @@
                             <td data-label="Cliente">{{ item.cliente }}</td>
                             <td data-label="SKU"><span class="badge text-bg-light border">{{ item.sku }}</span></td>
                             <td data-label="Cantidad">{{ item.cantidad }}</td>
-                            <td data-label="Serie">{{ item.serie|default:"-" }}</td>
+                            <td data-label="Serie">{{ item.series_resumen }}</td>
                             <td data-label="Estado inventario">{{ item.numero_dcto_estado|default:"-" }}</td>
 
                             <td data-label="Estado">
@@ -945,7 +994,7 @@
                                         data-cliente="{{ item.cliente }}"
                                         data-sku="{{ item.sku }}"
                                         data-cantidad="{{ item.cantidad }}"
-                                        data-serie="{{ item.serie|default:'' }}"
+                                        data-serie="{{ item.series_resumen }}"
                                         data-codigo-numerico="{{ item.codigo_numerico|default:'' }}"
                                         data-ubicacion="{{ item.ubicacion|default:'' }}"
                                         data-estado-inventario="{{ item.numero_dcto_estado|default:'' }}"
@@ -1056,6 +1105,68 @@
                         <div class="col-md-4">
                             <label class="form-label">{{ form.serie.label }}</label>
                             {{ form.serie }}
+                        </div>
+
+                        <div class="col-12">
+                            <div class="series-capture-card">
+                                <label class="form-label mb-2">
+                                    <i class="bi bi-upc-scan me-1"></i>
+                                    Series del producto
+                                </label>
+
+                                <div class="alert alert-light border small mb-3">
+                                    Si llegan varias unidades del mismo SKU, escanea o escribe cada serie aquí.
+                                    El campo <strong>Serie</strong> de arriba queda como respaldo.
+                                </div>
+
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-lg-7">
+                                        <label class="form-label">Serie a agregar</label>
+                                        <input
+                                            type="text"
+                                            id="serieInputScanner"
+                                            class="form-control"
+                                            placeholder="Escanea o escribe la serie"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <div class="col-lg-5 d-flex gap-2">
+                                        <button type="button" class="btn btn-brand w-100" id="addSerieBtn">
+                                            <i class="bi bi-plus-circle me-1"></i>
+                                            Agregar
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-primary w-100" id="scanSerieBtn">
+                                            <i class="bi bi-camera me-1"></i>
+                                            Cámara
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" name="series_json" id="seriesJson" value="[]">
+
+                                <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+                                    <div class="small text-muted">
+                                        Capturadas:
+                                        <strong><span id="seriesCount">0</span></strong>
+                                        /
+                                        <span id="seriesTarget">0</span>
+                                    </div>
+
+                                    <button type="button" class="btn btn-sm btn-outline-danger d-none" id="clearSeriesBtn">
+                                        Limpiar series
+                                    </button>
+                                </div>
+
+                                <div id="seriesList" class="series-list">
+                                    <span class="text-muted small">Aún no hay series capturadas.</span>
+                                </div>
+
+                                <div id="scannerContainer" class="mt-3 d-none">
+                                    <div id="reader"></div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-md-4">
@@ -1593,6 +1704,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 {% if open_user_modal %}
 <script>
@@ -1616,6 +1728,370 @@
         let currentTimelineUrl = null;
         let returnsCache = {};
         let currentGallery = [];
+
+        let createSeries = [];
+        let createScanner = null;
+        let createScannerRunning = false;
+
+        const createReturnModalElement = document.getElementById('createReturnModal');
+        const createReturnForm = createReturnModalElement ? createReturnModalElement.querySelector('form') : null;
+        const serieInputScanner = document.getElementById('serieInputScanner');
+        const addSerieBtn = document.getElementById('addSerieBtn');
+        const scanSerieBtn = document.getElementById('scanSerieBtn');
+        const clearSeriesBtn = document.getElementById('clearSeriesBtn');
+        const seriesJsonInput = document.getElementById('seriesJson');
+        const seriesList = document.getElementById('seriesList');
+        const seriesCount = document.getElementById('seriesCount');
+        const seriesTarget = document.getElementById('seriesTarget');
+        const scannerContainer = document.getElementById('scannerContainer');
+        const cantidadInput = document.getElementById('id_cantidad');
+        const legacySerieInput = document.getElementById('id_serie');
+
+        function getSeriesTarget() {
+            if (!cantidadInput) return 0;
+
+            const value = parseInt(cantidadInput.value || '0', 10);
+            return Number.isFinite(value) && value > 0 ? value : 0;
+        }
+
+        function isSeriesLimitReached() {
+            const target = getSeriesTarget();
+            return target > 0 && createSeries.length >= target;
+        }
+
+        function syncSeriesHidden() {
+            const target = getSeriesTarget();
+            const limitReached = target > 0 && createSeries.length >= target;
+
+            if (seriesJsonInput) {
+                seriesJsonInput.value = JSON.stringify(createSeries);
+            }
+
+            if (seriesCount) {
+                seriesCount.textContent = createSeries.length;
+            }
+
+            if (seriesTarget) {
+                seriesTarget.textContent = target;
+            }
+
+            if (clearSeriesBtn) {
+                clearSeriesBtn.classList.toggle('d-none', createSeries.length === 0);
+            }
+
+            if (addSerieBtn) {
+                addSerieBtn.disabled = limitReached;
+            }
+
+            if (serieInputScanner) {
+                serieInputScanner.disabled = limitReached;
+                serieInputScanner.placeholder = limitReached
+                    ? 'Cantidad completa'
+                    : 'Escanea o escribe la serie';
+            }
+
+            if (scanSerieBtn) {
+                scanSerieBtn.disabled = limitReached && !createScannerRunning;
+            }
+        }
+
+        function renderCreateSeries() {
+            if (!seriesList) return;
+
+            seriesList.innerHTML = '';
+
+            if (!createSeries.length) {
+                const empty = document.createElement('span');
+                empty.className = 'text-muted small';
+                empty.textContent = 'Aún no hay series capturadas.';
+                seriesList.appendChild(empty);
+                syncSeriesHidden();
+                return;
+            }
+
+            createSeries.forEach(function (serie, index) {
+                const badge = document.createElement('span');
+                badge.className = 'series-badge';
+
+                const text = document.createElement('span');
+                text.textContent = serie;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.setAttribute('aria-label', 'Eliminar serie');
+                removeBtn.dataset.index = String(index);
+                removeBtn.className = 'js-remove-create-serie';
+
+                badge.appendChild(text);
+                badge.appendChild(removeBtn);
+                seriesList.appendChild(badge);
+            });
+
+            syncSeriesHidden();
+        }
+
+        function addCreateSerie(value) {
+            const serie = String(value || '').trim();
+            const target = getSeriesTarget();
+
+            if (!serie) return false;
+
+            if (target <= 0) {
+                alert('Primero ingresa una cantidad válida.');
+                return false;
+            }
+
+            const exists = createSeries.some(function (item) {
+                return item.toUpperCase() === serie.toUpperCase();
+            });
+
+            if (exists) {
+                alert('Esta serie ya fue agregada.');
+                return false;
+            }
+
+            if (createSeries.length >= target) {
+                alert(`No puedes agregar más de ${target} serie(s).`);
+                return false;
+            }
+
+            createSeries.push(serie);
+
+            if (legacySerieInput && !legacySerieInput.value.trim()) {
+                legacySerieInput.value = serie;
+            }
+
+            renderCreateSeries();
+
+            if (isSeriesLimitReached()) {
+                stopCreateScanner();
+            }
+
+            return true;
+        }
+
+        function removeCreateSerie(index) {
+            createSeries.splice(index, 1);
+
+            if (legacySerieInput) {
+                legacySerieInput.value = createSeries[0] || '';
+            }
+
+            renderCreateSeries();
+        }
+
+        function clearCreateSeries() {
+            createSeries = [];
+
+            if (legacySerieInput) {
+                legacySerieInput.value = '';
+            }
+
+            renderCreateSeries();
+        }
+
+        function stopCreateScanner() {
+            if (!createScanner || !createScannerRunning) return Promise.resolve();
+
+            return createScanner.stop()
+                .then(function () {
+                    createScannerRunning = false;
+
+                    if (scannerContainer) {
+                        scannerContainer.classList.add('d-none');
+                    }
+
+                    if (scanSerieBtn) {
+                        scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
+                    }
+                })
+                .catch(function () {
+                    createScannerRunning = false;
+                });
+        }
+
+        function startCreateScanner() {
+            const target = getSeriesTarget();
+
+            if (target <= 0) {
+                alert('Primero ingresa una cantidad válida.');
+                return;
+            }
+
+            if (isSeriesLimitReached()) {
+                alert(`Ya capturaste las ${target} serie(s) indicadas en cantidad.`);
+                return;
+            }
+
+            if (!window.Html5Qrcode) {
+                alert('No se pudo cargar el lector de códigos. Revisa la conexión o el CDN.');
+                return;
+            }
+
+            if (!scannerContainer) return;
+
+            scannerContainer.classList.remove('d-none');
+
+            if (!createScanner) {
+                createScanner = new Html5Qrcode('reader');
+            }
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 260, height: 140 }
+            };
+
+            if (window.Html5QrcodeSupportedFormats) {
+                config.formatsToSupport = [
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ];
+            }
+
+            createScanner.start(
+                { facingMode: 'environment' },
+                config,
+                function (decodedText) {
+                    if (isSeriesLimitReached()) {
+                        stopCreateScanner();
+                        return;
+                    }
+
+                    const added = addCreateSerie(decodedText);
+
+                    if (added && serieInputScanner) {
+                        serieInputScanner.value = '';
+                    }
+
+                    if (added && isSeriesLimitReached()) {
+                        stopCreateScanner();
+                    }
+                },
+                function () {}
+            )
+            .then(function () {
+                createScannerRunning = true;
+
+                if (scanSerieBtn) {
+                    scanSerieBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Detener';
+                }
+            })
+            .catch(function (error) {
+                console.warn(error);
+                alert('No se pudo abrir la cámara. En celular usa HTTPS y da permiso a la cámara.');
+            });
+        }
+
+        if (cantidadInput) {
+            cantidadInput.addEventListener('input', function () {
+                const target = getSeriesTarget();
+
+                if (target > 0 && createSeries.length > target) {
+                    alert(`La cantidad ahora es ${target}. Se eliminarán las series sobrantes.`);
+                    createSeries = createSeries.slice(0, target);
+
+                    if (legacySerieInput) {
+                        legacySerieInput.value = createSeries[0] || '';
+                    }
+                }
+
+                renderCreateSeries();
+
+                if (isSeriesLimitReached()) {
+                    stopCreateScanner();
+                }
+            });
+        }
+
+        if (addSerieBtn) {
+            addSerieBtn.addEventListener('click', function () {
+                if (!serieInputScanner) return;
+
+                if (addCreateSerie(serieInputScanner.value)) {
+                    serieInputScanner.value = '';
+                    serieInputScanner.focus();
+                }
+            });
+        }
+
+        if (serieInputScanner) {
+            serieInputScanner.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+
+                    if (addCreateSerie(serieInputScanner.value)) {
+                        serieInputScanner.value = '';
+                    }
+                }
+            });
+        }
+
+        if (scanSerieBtn) {
+            scanSerieBtn.addEventListener('click', function () {
+                if (createScannerRunning) {
+                    stopCreateScanner();
+                } else {
+                    startCreateScanner();
+                }
+            });
+        }
+
+        if (clearSeriesBtn) {
+            clearSeriesBtn.addEventListener('click', clearCreateSeries);
+        }
+
+        if (seriesList) {
+            seriesList.addEventListener('click', function (event) {
+                const button = event.target.closest('.js-remove-create-serie');
+
+                if (!button) return;
+
+                removeCreateSerie(Number(button.dataset.index));
+            });
+        }
+
+        if (createReturnForm) {
+            createReturnForm.addEventListener('submit', function (event) {
+                if (serieInputScanner && serieInputScanner.value.trim()) {
+                    addCreateSerie(serieInputScanner.value);
+                    serieInputScanner.value = '';
+                }
+
+                syncSeriesHidden();
+
+                const target = getSeriesTarget();
+
+                if (target && createSeries.length > target) {
+                    event.preventDefault();
+                    alert(`No puedes guardar ${createSeries.length} series si la cantidad indicada es ${target}.`);
+                    return;
+                }
+
+                if (createSeries.length && target && createSeries.length < target) {
+                    const ok = confirm(
+                        `La cantidad ingresada es ${target}, pero capturaste ${createSeries.length} serie(s). ¿Deseas guardar de todas formas?`
+                    );
+
+                    if (!ok) {
+                        event.preventDefault();
+                    }
+                }
+            });
+        }
+
+        if (createReturnModalElement) {
+            createReturnModalElement.addEventListener('hidden.bs.modal', function () {
+                stopCreateScanner();
+            });
+        }
+
+        renderCreateSeries();
 
         function escapeHtml(value) {
             if (value === null || value === undefined) {
@@ -2132,7 +2608,7 @@
 
         syncLiveData();
 
-        setInterval(syncLiveData, 1500);
+        setInterval(syncLiveData, 15000);
     });
 </script>
 

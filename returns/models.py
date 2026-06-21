@@ -212,6 +212,25 @@ class ReturnRequest(models.Model):
         if self.id:
             return str(self.id).zfill(10)
         return '0000000000'
+    
+    @property
+    def series_resumen(self):
+        """
+        Muestra las series asociadas en formato corto para tabla y detalle.
+        Si no hay series múltiples, usa el campo antiguo serie.
+        """
+        try:
+            series = list(self.series.values_list('serie', flat=True))
+        except Exception:
+            series = []
+
+        if series:
+            if len(series) <= 3:
+                return ', '.join(series)
+
+            return f'{len(series)} series: {", ".join(series[:3])}...'
+
+        return self.serie or '-'
 
     def __str__(self):
         return f'{self.correlativo} - {self.numero_documento} - {self.cliente} - {self.sku}'
@@ -293,3 +312,43 @@ class ReturnRequestAttachment(models.Model):
 
     def __str__(self):
         return f'{self.return_request.correlativo} - {self.get_tipo_display()}'
+class ReturnRequestSerial(models.Model):
+    return_request = models.ForeignKey(
+        ReturnRequest,
+        on_delete=models.CASCADE,
+        related_name='series',
+        verbose_name='Devolución'
+    )
+
+    serie = models.CharField(
+        max_length=150,
+        verbose_name='Serie'
+    )
+
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='series_devoluciones_creadas',
+        verbose_name='Creado por'
+    )
+
+    creado_en = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Creado en'
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'Serie de devolución'
+        verbose_name_plural = 'Series de devoluciones'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['return_request', 'serie'],
+                name='unique_return_request_serie'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.return_request.correlativo} - {self.serie}'

@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,7 +12,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-from .models import ReturnRequest, ReturnRequestHistory, ReturnRequestAttachment
+from .models import ReturnRequest, ReturnRequestHistory, ReturnRequestAttachment, ReturnRequestSerial
 from .forms import ReturnRequestForm, ReturnClientResponseForm, ClienteUserCreateForm
 
 
@@ -169,6 +171,118 @@ def redirect_after_action(request, devolucion):
 
     return redirect('returns:return_detail', pk=devolucion.pk)
 
+def obtener_series_desde_request(request):
+    """
+    Lee las series enviadas desde el modal.
+    Acepta:
+    - series_json: lista JSON enviada por JavaScript
+    - serie: campo antiguo del formulario, como respaldo
+    Elimina vacíos y duplicados conservando el orden.
+    """
+    series = []
+
+    series_json = request.POST.get('series_json', '[]')
+
+    try:
+        data = json.loads(series_json)
+    except json.JSONDecodeError:
+        data = []
+
+    if isinstance(data, list):
+        series.extend(data)
+
+    serie_manual = request.POST.get('serie', '').strip()
+    if serie_manual:
+        series.append(serie_manual)
+
+    limpias = []
+    vistas = set()
+
+    for serie in series:
+        serie = str(serie or '').strip()
+
+        if not serie:
+            continue
+
+        normalizada = serie.upper()
+
+        if normalizada in vistas:
+            continue
+
+        vistas.add(normalizada)
+        limpias.append(serie)
+
+    return limpias
+
+
+def guardar_series_devolucion(devolucion, series, usuario=None):
+    """
+    Guarda múltiples series asociadas a una devolución.
+    Mantiene el campo antiguo devolucion.serie con la primera serie para compatibilidad.
+    """
+    if not series:
+        return 0
+
+    if not devolucion.serie:
+        devolucion.serie = series[0]
+        devolucion.save(update_fields=['serie', 'actualizado_en'])
+
+    creadas = 0
+
+    for serie in series:
+        _, created = ReturnRequestSerial.objects.get_or_create(
+            return_request=devolucion,
+            serie=serie,
+            defaults={'creado_por': usuario if usuario and usuario.is_authenticated else None}
+        )
+
+        if created:
+            creadas += 1
+
+    if creadas:
+        registrar_historial(
+            devolucion=devolucion,
+            titulo='Series capturadas',
+            descripcion=f'Se registraron {creadas} serie(s): {", ".join(series)}',
+            usuario=usuario,
+            tipo='SERIES'
+        )
+
+    return creadas
+
+
+def resumen_series_devolucion(devolucion):
+    """
+    Texto corto para tabla, detalle, API y exportación.
+    """
+    try:
+        series = list(devolucion.series.values_list('serie', flat=True))
+    except Exception:
+        series = []
+
+    if series:
+        if len(series) <= 3:
+            return ', '.join(series)
+
+        return f'{len(series)} series: {", ".join(series[:3])}...'
+
+    return devolucion.serie or '-'
+
+
+def texto_series_exportacion(devolucion):
+    """
+    Texto completo para Excel.
+    """
+    try:
+        series = list(devolucion.series.values_list('serie', flat=True))
+    except Exception:
+        series = []
+
+    if series:
+        return '\n'.join(series)
+
+    return devolucion.serie or ''
+
 @login_required
 def return_list(request):
     base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta = obtener_devoluciones_filtradas(request)
@@ -217,7 +331,24 @@ def return_create(request):
 
             guardar_adjuntos_internos(devolucion, request)
 
-            messages.success(request, 'Devolución registrada correctamente.')
+            series = obtener_series_desde_request(request)
+            total_series = guardar_series_devolucion(devolucion, series, request.user)
+
+            if total_series:
+                if devolucion.cantidad and total_series != devolucion.cantidad:
+                    messages.warning(
+                        request,
+                        f'Devolución registrada, pero la cantidad es {devolucion.cantidad} '
+                        f'y se capturaron {total_series} serie(s).'
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f'Devolución registrada correctamente con {total_series} serie(s).'
+                    )
+            else:
+                messages.success(request, 'Devolución registrada correctamente.')
+
             return redirect('returns:return_list')
     else:
         form = ReturnRequestForm(user=request.user)
@@ -722,7 +853,7 @@ def return_live_feed(request):
             'cliente': item.cliente or '',
             'sku': item.sku or '',
             'cantidad': item.cantidad,
-            'serie': item.serie or '-',
+            'serie': resumen_series_devolucion(item),
             'estado_inventario': item.numero_dcto_estado or '-',
             'responsable': item.responsable or '-',
             'estado': item.estado,
@@ -829,7 +960,7 @@ def obtener_devoluciones_filtradas(request):
     fecha_desde = request.GET.get('fecha_desde', '').strip()
     fecha_hasta = request.GET.get('fecha_hasta', '').strip()
 
-    base_queryset = ReturnRequest.objects.all().order_by('-fecha_recepcion', '-id')
+    base_queryset = ReturnRequest.objects.all().prefetch_related('series').order_by('-fecha_recepcion', '-id')
     devoluciones = base_queryset
 
     if fecha_desde:
@@ -846,16 +977,18 @@ def obtener_devoluciones_filtradas(request):
             Q(sku__icontains=query) |
             Q(codigo_numerico__icontains=query) |
             Q(serie__icontains=query) |
+            Q(series__serie__icontains=query) |
             Q(ubicacion__icontains=query) |
             Q(numero_dcto_estado__icontains=query) |
             Q(responsable__icontains=query)
-        )
+        ).distinct()
 
     if estado:
         devoluciones = devoluciones.filter(estado=estado)
 
     return base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta
-    
+
+
 @login_required
 def return_export_xlsx(request):
     base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta = obtener_devoluciones_filtradas(request)
@@ -872,7 +1005,7 @@ def return_export_xlsx(request):
         "Cliente",
         "SKU",
         "Cantidad",
-        "Serie",
+        "Series",
         "Estado inventario",
         "Estado",
         "Responsable",
@@ -890,7 +1023,7 @@ def return_export_xlsx(request):
             item.cliente or "",
             item.sku or "",
             item.cantidad or 0,
-            item.serie or "",
+            texto_series_exportacion(item),
             item.numero_dcto_estado or "",
             item.get_estado_display(),
             item.responsable or "",

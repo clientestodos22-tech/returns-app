@@ -448,6 +448,30 @@
             background: white;
         }
 
+        #createReturnModal .modal-content {
+            max-height: calc(100dvh - 16px);
+            overflow: hidden;
+        }
+
+        #createReturnModal .modal-content > form {
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100dvh - 16px);
+            min-height: 0;
+        }
+
+        #createReturnModal .modal-header,
+        #createReturnModal .modal-footer,
+        #createReturnModal .alert {
+            flex-shrink: 0;
+        }
+
+        #createReturnModal .modal-body {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            min-height: 0;
+        }
+
         @media (max-width: 768px) {
             .main-wrapper {
                 padding: 14px;
@@ -542,6 +566,39 @@
 
             .modal-timeline-middle {
                 display: none;
+            }
+            #createReturnModal .modal-dialog {
+                margin: 0;
+                max-width: 100%;
+                height: 100dvh;
+            }
+
+            #createReturnModal .modal-content {
+                height: 100dvh;
+                max-height: 100dvh;
+                border-radius: 0;
+            }
+
+            #createReturnModal .modal-content > form {
+                height: 100dvh;
+                max-height: 100dvh;
+            }
+
+            #createReturnModal .modal-body {
+                overflow-y: auto;
+                padding: 14px;
+            }
+
+            #createReturnModal .modal-footer {
+                background: white;
+                border-top: 1px solid #e5e7eb;
+                position: sticky;
+                bottom: 0;
+                z-index: 5;
+            }
+
+            #createReturnModal .modal-footer .btn {
+                width: 100%;
             }
         }
     </style>
@@ -930,7 +987,7 @@
 
 {% if not es_cliente %}
 <div class="modal fade" id="createReturnModal" tabindex="-1" aria-labelledby="createReturnModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-md-down create-return-dialog">
         <div class="modal-content">
 
             <form method="post" action="{% url 'returns:return_create' %}" enctype="multipart/form-data">

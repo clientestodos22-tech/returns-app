@@ -18,6 +18,6 @@ urlpatterns = [
     path('<int:pk>/responder/', views.return_respond, name='return_respond'),
     path('<int:pk>/rechazar/', views.return_reject, name='return_reject'),
     path('<int:pk>/cerrar/', views.return_close, name='return_close'),
-    
+    path("exportar/", views.return_export_xlsx, name="return_export_xlsx"),
     path('api/<int:pk>/timeline/', views.return_timeline_feed, name='return_timeline_feed'),
 ]

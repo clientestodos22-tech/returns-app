@@ -4,8 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 from .models import ReturnRequest, ReturnRequestHistory, ReturnRequestAttachment
 from .forms import ReturnRequestForm, ReturnClientResponseForm, ClienteUserCreateForm
@@ -168,27 +171,7 @@ def redirect_after_action(request, devolucion):
 
 @login_required
 def return_list(request):
-    query = request.GET.get('q', '').strip()
-    estado = request.GET.get('estado', '').strip()
-
-    base_queryset = ReturnRequest.objects.all()
-    devoluciones = base_queryset
-
-    if query:
-        devoluciones = devoluciones.filter(
-            Q(numero_documento__icontains=query) |
-            Q(documento_ingreso__icontains=query) |
-            Q(cliente__icontains=query) |
-            Q(sku__icontains=query) |
-            Q(codigo_numerico__icontains=query) |
-            Q(serie__icontains=query) |
-            Q(ubicacion__icontains=query) |
-            Q(numero_dcto_estado__icontains=query) |
-            Q(responsable__icontains=query)
-        )
-
-    if estado:
-        devoluciones = devoluciones.filter(estado=estado)
+    base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta = obtener_devoluciones_filtradas(request)
 
     cliente = es_cliente(request.user)
 
@@ -196,6 +179,8 @@ def return_list(request):
         'devoluciones': devoluciones,
         'query': query,
         'estado': estado,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
         'estado_choices': ReturnRequest.ESTADO_CHOICES,
 
         'form': ReturnRequestForm(user=request.user),
@@ -205,12 +190,12 @@ def return_list(request):
         'es_cliente': cliente,
 
         'total_devoluciones': base_queryset.count(),
-        'total_recibidas': base_queryset.filter(estado='RECIBIDO').count(),
-        'total_revision': base_queryset.filter(estado='EN_REVISION').count(),
-        'total_observadas': base_queryset.filter(estado='OBSERVADO').count(),
-        'total_aprobadas': base_queryset.filter(estado='APROBADO').count(),
-        'total_rechazadas': base_queryset.filter(estado='RECHAZADO').count(),
-        'total_cerradas': base_queryset.filter(estado='CERRADO').count(),
+        'total_recibidas': devoluciones.filter(estado='RECIBIDO').count(),
+        'total_revision': devoluciones.filter(estado='EN_REVISION').count(),
+        'total_observadas': devoluciones.filter(estado='OBSERVADO').count(),
+        'total_aprobadas': devoluciones.filter(estado='APROBADO').count(),
+        'total_rechazadas': devoluciones.filter(estado='RECHAZADO').count(),
+        'total_cerradas': devoluciones.filter(estado='CERRADO').count(),
         'total_filtradas': devoluciones.count(),
     })
 
@@ -721,27 +706,7 @@ def return_status_feed(request):
 
 @login_required
 def return_live_feed(request):
-    query = request.GET.get('q', '').strip()
-    estado = request.GET.get('estado', '').strip()
-
-    base_queryset = ReturnRequest.objects.all()
-    devoluciones = base_queryset
-
-    if query:
-        devoluciones = devoluciones.filter(
-            Q(numero_documento__icontains=query) |
-            Q(documento_ingreso__icontains=query) |
-            Q(cliente__icontains=query) |
-            Q(sku__icontains=query) |
-            Q(codigo_numerico__icontains=query) |
-            Q(serie__icontains=query) |
-            Q(ubicacion__icontains=query) |
-            Q(numero_dcto_estado__icontains=query) |
-            Q(responsable__icontains=query)
-        )
-
-    if estado:
-        devoluciones = devoluciones.filter(estado=estado)
+    base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta = obtener_devoluciones_filtradas(request)
 
     cliente = es_cliente(request.user)
 
@@ -782,15 +747,15 @@ def return_live_feed(request):
     return JsonResponse({
         'items': items,
         'counts': {
-            'total': base_queryset.count(),
-            'recibidas': base_queryset.filter(estado='RECIBIDO').count(),
-            'revision': base_queryset.filter(estado='EN_REVISION').count(),
-            'observadas': base_queryset.filter(estado='OBSERVADO').count(),
-            'aprobadas': base_queryset.filter(estado='APROBADO').count(),
-            'rechazadas': base_queryset.filter(estado='RECHAZADO').count(),
-            'cerradas': base_queryset.filter(estado='CERRADO').count(),
-            'filtradas': devoluciones.count(),
-        }
+        'total': devoluciones.count(),
+        'recibidas': devoluciones.filter(estado='RECIBIDO').count(),
+        'revision': devoluciones.filter(estado='EN_REVISION').count(),
+        'observadas': devoluciones.filter(estado='OBSERVADO').count(),
+        'aprobadas': devoluciones.filter(estado='APROBADO').count(),
+        'rechazadas': devoluciones.filter(estado='RECHAZADO').count(),
+        'cerradas': devoluciones.filter(estado='CERRADO').count(),
+        'filtradas': devoluciones.count(),
+    }
     })
 
 @login_required
@@ -857,3 +822,132 @@ def return_timeline_feed(request, pk):
         'correlativo': devolucion.correlativo,
         'items': items,
     })
+    
+def obtener_devoluciones_filtradas(request):
+    query = request.GET.get('q', '').strip()
+    estado = request.GET.get('estado', '').strip()
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+
+    base_queryset = ReturnRequest.objects.all().order_by('-fecha_recepcion', '-id')
+    devoluciones = base_queryset
+
+    if fecha_desde:
+        devoluciones = devoluciones.filter(fecha_recepcion__gte=fecha_desde)
+
+    if fecha_hasta:
+        devoluciones = devoluciones.filter(fecha_recepcion__lte=fecha_hasta)
+
+    if query:
+        devoluciones = devoluciones.filter(
+            Q(numero_documento__icontains=query) |
+            Q(documento_ingreso__icontains=query) |
+            Q(cliente__icontains=query) |
+            Q(sku__icontains=query) |
+            Q(codigo_numerico__icontains=query) |
+            Q(serie__icontains=query) |
+            Q(ubicacion__icontains=query) |
+            Q(numero_dcto_estado__icontains=query) |
+            Q(responsable__icontains=query)
+        )
+
+    if estado:
+        devoluciones = devoluciones.filter(estado=estado)
+
+    return base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta
+    
+@login_required
+def return_export_xlsx(request):
+    base_queryset, devoluciones, query, estado, fecha_desde, fecha_hasta = obtener_devoluciones_filtradas(request)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Devoluciones"
+
+    headers = [
+        "Correlativo",
+        "Fecha recepción",
+        "N° Documento",
+        "Documento ingreso",
+        "Cliente",
+        "SKU",
+        "Cantidad",
+        "Serie",
+        "Estado inventario",
+        "Estado",
+        "Responsable",
+        "Observaciones",
+    ]
+
+    ws.append(headers)
+
+    for item in devoluciones:
+        ws.append([
+            item.correlativo or "",
+            item.fecha_recepcion if item.fecha_recepcion else "",
+            item.numero_documento or "",
+            item.documento_ingreso or "",
+            item.cliente or "",
+            item.sku or "",
+            item.cantidad or 0,
+            item.serie or "",
+            item.numero_dcto_estado or "",
+            item.get_estado_display(),
+            item.responsable or "",
+            item.observaciones or "",
+        ])
+
+    header_fill = PatternFill("solid", fgColor="0B4C6F")
+    header_font = Font(color="FFFFFF", bold=True)
+    border = Border(
+        left=Side(style="thin", color="D9E2EC"),
+        right=Side(style="thin", color="D9E2EC"),
+        top=Side(style="thin", color="D9E2EC"),
+        bottom=Side(style="thin", color="D9E2EC"),
+    )
+
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    for row in ws.iter_rows(min_row=2):
+        for cell in row:
+            cell.border = border
+            cell.alignment = Alignment(vertical="center")
+
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = ws.dimensions
+
+    for row in ws.iter_rows(min_row=2, min_col=2, max_col=2):
+        for cell in row:
+            cell.number_format = "dd/mm/yyyy"
+
+    column_widths = {
+        "A": 16,
+        "B": 18,
+        "C": 18,
+        "D": 22,
+        "E": 28,
+        "F": 18,
+        "G": 12,
+        "H": 18,
+        "I": 22,
+        "J": 18,
+        "K": 24,
+        "L": 40,
+    }
+
+    for column, width in column_widths.items():
+        ws.column_dimensions[column].width = width
+
+    ws.row_dimensions[1].height = 24
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="devoluciones.xlsx"'
+
+    wb.save(response)
+    return response

@@ -1735,12 +1735,14 @@
         let createSeries = [];
         let createScanner = null;
         let createScannerRunning = false;
+        let createScannerStarting = false;
 
         let scannerLastCandidate = '';
         let scannerStableReads = 0;
         let scannerLockedCandidate = false;
 
         const MIN_SCANNER_SERIE_LENGTH = 18;
+        const LSS_NUMERIC_MIN_LENGTH = 20;
         const STABLE_READS_REQUIRED = 2;
 
         const createReturnModalElement = document.getElementById('createReturnModal');
@@ -1800,13 +1802,33 @@
                 return false;
             }
 
-            return /^[A-Za-z0-9]+$/.test(texto);
+            if (!/^[A-Za-z0-9]+$/.test(texto)) {
+                return false;
+            }
+
+            /*
+                Evita lecturas parciales de series LSS numéricas.
+                Ejemplo correcto: 00299695106010016175 = 20 dígitos.
+                Si el lector devuelve 18 o 19 dígitos empezando por 00,
+                lo consideramos lectura incompleta.
+            */
+            if (/^\d+$/.test(texto) && texto.startsWith('00') && texto.length < LSS_NUMERIC_MIN_LENGTH) {
+                return false;
+            }
+
+            return true;
         }
 
         function resetScannerCandidate() {
             scannerLastCandidate = '';
             scannerStableReads = 0;
             scannerLockedCandidate = false;
+        }
+
+        function setScannerStatus(message) {
+            if (serieInputScanner && message) {
+                serieInputScanner.placeholder = message;
+            }
         }
 
         function syncSeriesHidden() {
@@ -1830,7 +1852,7 @@
                 serieInputScanner.disabled = false;
             }
 
-            if (scanSerieBtn) {
+            if (scanSerieBtn && !createScannerStarting) {
                 scanSerieBtn.disabled = false;
             }
         }
@@ -1873,7 +1895,7 @@
         }
 
         function addCreateSerie(value) {
-            const serie = String(value || '').trim();
+            const serie = limpiarLecturaScanner(value);
 
             if (!serie) {
                 return false;
@@ -1883,6 +1905,11 @@
 
             if (!cantidad) {
                 alert('Primero debes ingresar una cantidad válida.');
+                return false;
+            }
+
+            if (!esLecturaScannerValida(serie)) {
+                alert('La serie capturada parece incompleta o inválida. Vuelve a escanearla o escríbela manualmente.');
                 return false;
             }
 
@@ -1949,37 +1976,105 @@
             resetScannerCandidate();
         }
 
-        function stopCreateScanner() {
-            if (!createScanner || !createScannerRunning) return Promise.resolve();
+        async function stopCreateScanner() {
+            createScannerStarting = false;
 
-            return createScanner.stop()
-                .then(function () {
-                    createScannerRunning = false;
+            if (!createScanner) {
+                createScannerRunning = false;
 
-                    if (scannerContainer) {
-                        scannerContainer.classList.add('d-none');
-                    }
+                if (scannerContainer) {
+                    scannerContainer.classList.add('d-none');
+                }
 
-                    const reader = document.getElementById('reader');
-                    if (reader) {
-                        reader.innerHTML = '';
-                    }
+                if (scanSerieBtn) {
+                    scanSerieBtn.disabled = false;
+                    scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
+                }
 
-                    if (scanSerieBtn) {
-                        scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
-                    }
+                if (addSerieBtn) {
+                    addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
+                }
 
-                    if (addSerieBtn) {
-                        addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
-                    }
-                })
-                .catch(function (error) {
-                    console.warn('Error deteniendo cámara:', error);
-                    createScannerRunning = false;
-                });
+                return;
+            }
+
+            try {
+                if (createScannerRunning) {
+                    await createScanner.stop();
+                }
+            } catch (error) {
+                console.warn('Error deteniendo cámara:', error);
+            }
+
+            try {
+                if (createScanner && typeof createScanner.clear === 'function') {
+                    await createScanner.clear();
+                }
+            } catch (error) {
+                console.warn('Error limpiando cámara:', error);
+            }
+
+            createScanner = null;
+            createScannerRunning = false;
+
+            if (scannerContainer) {
+                scannerContainer.classList.add('d-none');
+            }
+
+            const reader = document.getElementById('reader');
+            if (reader) {
+                reader.innerHTML = '';
+            }
+
+            if (scanSerieBtn) {
+                scanSerieBtn.disabled = false;
+                scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
+            }
+
+            if (addSerieBtn) {
+                addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
+            }
+        }
+
+        function onScannerSuccess(decodedText) {
+            if (scannerLockedCandidate) {
+                return;
+            }
+
+            const lectura = limpiarLecturaScanner(decodedText);
+
+            if (!esLecturaScannerValida(lectura)) {
+                return;
+            }
+
+            if (lectura === scannerLastCandidate) {
+                scannerStableReads += 1;
+            } else {
+                scannerLastCandidate = lectura;
+                scannerStableReads = 1;
+            }
+
+            if (scannerStableReads < STABLE_READS_REQUIRED) {
+                setScannerStatus(`Verificando lectura: ${lectura}`);
+                return;
+            }
+
+            scannerLockedCandidate = true;
+
+            if (serieInputScanner) {
+                serieInputScanner.value = lectura;
+                serieInputScanner.placeholder = 'Lectura lista. Presiona Capturar serie.';
+                serieInputScanner.focus();
+            }
+
+            stopCreateScanner();
         }
 
         async function startCreateScanner() {
+            if (createScannerRunning || createScannerStarting) {
+                return;
+            }
+
             if (!window.Html5Qrcode) {
                 alert('No se pudo cargar el lector de códigos. Revisa que esté cargado html5-qrcode.');
                 return;
@@ -2009,6 +2104,7 @@
                 return;
             }
 
+            createScannerStarting = true;
             resetScannerCandidate();
 
             scannerContainer.classList.remove('d-none');
@@ -2025,45 +2121,34 @@
                 scanSerieBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Abriendo...';
             }
 
-            // Espera pequeña para que el modal muestre el contenedor antes de iniciar cámara
+            /*
+                Importante en modal móvil:
+                esperamos a que el contenedor #reader tenga tamaño visible
+                antes de iniciar html5-qrcode.
+            */
             await new Promise(function (resolve) {
-                setTimeout(resolve, 350);
+                setTimeout(resolve, 500);
             });
 
             try {
-                const cameras = await Html5Qrcode.getCameras();
-
-                if (!cameras || !cameras.length) {
-                    alert('No se detectó ninguna cámara. Revisa permisos del navegador.');
-                    return;
-                }
-
-                let selectedCamera = cameras[cameras.length - 1];
-
-                const backCamera = cameras.find(function (camera) {
-                    const label = String(camera.label || '').toLowerCase();
-                    return (
-                        label.includes('back') ||
-                        label.includes('rear') ||
-                        label.includes('environment') ||
-                        label.includes('trasera')
-                    );
-                });
-
-                if (backCamera) {
-                    selectedCamera = backCamera;
-                }
-
-                createScanner = new Html5Qrcode('reader');
+                createScanner = new Html5Qrcode('reader', false);
 
                 const config = {
-                    fps: 6,
-                    qrbox: {
-                        width: 300,
-                        height: 160
+                    fps: 10,
+                    qrbox: function (viewfinderWidth, viewfinderHeight) {
+                        const width = Math.floor(Math.min(viewfinderWidth * 0.92, 420));
+                        const height = Math.floor(Math.min(viewfinderHeight * 0.38, 190));
+
+                        return {
+                            width: Math.max(width, 260),
+                            height: Math.max(height, 130)
+                        };
                     },
                     aspectRatio: 1.7777778,
-                    disableFlip: false
+                    disableFlip: false,
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
                 };
 
                 if (window.Html5QrcodeSupportedFormats) {
@@ -2078,49 +2163,53 @@
                     ];
                 }
 
-                await createScanner.start(
-                    selectedCamera.id,
-                    config,
-                    function (decodedText) {
-                        if (scannerLockedCandidate) {
-                            return;
-                        }
+                /*
+                    Primero intentamos con cámara trasera por facingMode.
+                    Si el navegador falla, hacemos fallback a lista de cámaras.
+                */
+                try {
+                    await createScanner.start(
+                        { facingMode: 'environment' },
+                        config,
+                        onScannerSuccess,
+                        function () {}
+                    );
+                } catch (firstError) {
+                    console.warn('Fallback buscando cámaras:', firstError);
 
-                        const lectura = limpiarLecturaScanner(decodedText);
+                    const cameras = await Html5Qrcode.getCameras();
 
-                        if (!esLecturaScannerValida(lectura)) {
-                            return;
-                        }
+                    if (!cameras || !cameras.length) {
+                        throw firstError;
+                    }
 
-                        if (lectura === scannerLastCandidate) {
-                            scannerStableReads += 1;
-                        } else {
-                            scannerLastCandidate = lectura;
-                            scannerStableReads = 1;
-                        }
+                    let selectedCamera = cameras[cameras.length - 1];
 
-                        if (scannerStableReads < STABLE_READS_REQUIRED) {
-                            if (serieInputScanner) {
-                                serieInputScanner.placeholder = `Verificando lectura: ${lectura}`;
-                            }
+                    const backCamera = cameras.find(function (camera) {
+                        const label = String(camera.label || '').toLowerCase();
 
-                            return;
-                        }
+                        return (
+                            label.includes('back') ||
+                            label.includes('rear') ||
+                            label.includes('environment') ||
+                            label.includes('trasera')
+                        );
+                    });
 
-                        scannerLockedCandidate = true;
+                    if (backCamera) {
+                        selectedCamera = backCamera;
+                    }
 
-                        if (serieInputScanner) {
-                            serieInputScanner.value = lectura;
-                            serieInputScanner.placeholder = 'Lectura lista. Presiona Capturar serie.';
-                            serieInputScanner.focus();
-                        }
-
-                        stopCreateScanner();
-                    },
-                    function () {}
-                );
+                    await createScanner.start(
+                        selectedCamera.id,
+                        config,
+                        onScannerSuccess,
+                        function () {}
+                    );
+                }
 
                 createScannerRunning = true;
+                createScannerStarting = false;
 
                 if (scanSerieBtn) {
                     scanSerieBtn.disabled = false;
@@ -2131,6 +2220,8 @@
                     addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
                 }
 
+                setScannerStatus('Enfoca el código de barras...');
+
                 scannerContainer.scrollIntoView({
                     behavior: 'smooth',
                     block: 'center'
@@ -2139,7 +2230,18 @@
             } catch (error) {
                 console.warn('Error abriendo cámara:', error);
 
+                createScannerStarting = false;
                 createScannerRunning = false;
+
+                try {
+                    if (createScanner && typeof createScanner.clear === 'function') {
+                        await createScanner.clear();
+                    }
+                } catch (clearError) {
+                    console.warn('Error limpiando scanner fallido:', clearError);
+                }
+
+                createScanner = null;
 
                 if (scannerContainer) {
                     scannerContainer.classList.add('d-none');
@@ -2148,6 +2250,10 @@
                 if (scanSerieBtn) {
                     scanSerieBtn.disabled = false;
                     scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
+                }
+
+                if (serieInputScanner) {
+                    serieInputScanner.placeholder = 'Escanea o escribe la serie';
                 }
 
                 alert('No se pudo abrir la cámara. Revisa permisos de cámara en Chrome y vuelve a intentar.');
@@ -2177,7 +2283,7 @@
 
         if (scanSerieBtn) {
             scanSerieBtn.addEventListener('click', function () {
-                if (createScannerRunning) {
+                if (createScannerRunning || createScannerStarting) {
                     stopCreateScanner();
                 } else {
                     startCreateScanner();
@@ -2273,257 +2379,6 @@
             createReturnModalElement.addEventListener('hidden.bs.modal', function () {
                 stopCreateScanner();
                 resetScannerCandidate();
-            });
-        }
-
-        renderCreateSeries();
-            return true;
-        }
-
-        function clearCreateSeries() {
-            createSeries = [];
-
-            if (legacySerieInput) {
-                legacySerieInput.value = '';
-            }
-
-            renderCreateSeries();
-        }
-
-        function getCantidadDevolucion() {
-            const cantidadInput = document.getElementById('id_cantidad');
-
-            if (!cantidadInput) {
-                return 0;
-            }
-
-            const cantidad = parseInt(cantidadInput.value, 10);
-
-            if (isNaN(cantidad) || cantidad <= 0) {
-                return 0;
-            }
-
-            return cantidad;
-        }
-
-        function clearCreateSeries() {
-            createSeries = [];
-
-            if (legacySerieInput) {
-                legacySerieInput.value = '';
-            }
-
-            renderCreateSeries();
-        }
-
-        function stopCreateScanner() {
-            if (!createScanner || !createScannerRunning) return Promise.resolve();
-
-            return createScanner.stop()
-                .then(function () {
-                    createScannerRunning = false;
-
-                    if (scannerContainer) {
-                        scannerContainer.classList.add('d-none');
-                    }
-
-                    if (scanSerieBtn) {
-                        scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
-                    }
-
-                    if (addSerieBtn) {
-                        addSerieBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar';
-                    }
-                })
-                .catch(function () {
-                    createScannerRunning = false;
-                });
-        }
-
-        function startCreateScanner() {
-            if (!window.Html5Qrcode) {
-                alert('No se pudo cargar el lector de códigos. Revisa la conexión o el CDN.');
-                return;
-            }
-
-            if (!scannerContainer) return;
-
-            scannerContainer.classList.remove('d-none');
-
-            if (!createScanner) {
-                createScanner = new Html5Qrcode('reader');
-            }
-
-            const config = {
-                fps: 10,
-                qrbox: { width: 260, height: 140 }
-            };
-
-            if (window.Html5QrcodeSupportedFormats) {
-                config.formatsToSupport = [
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ];
-            }
-
-            createScanner.start(
-                { facingMode: 'environment' },
-                config,
-                function (decodedText) {
-                    /*
-                        MODO MANUAL:
-                        La cámara solo coloca la serie detectada en el input.
-                        NO la agrega automáticamente.
-                        Para agregarla, debes presionar el botón Agregar/Capturar.
-                    */
-                    if (serieInputScanner) {
-                        serieInputScanner.value = String(decodedText || '').trim();
-                    }
-                },
-                function () {}
-            )
-            .then(function () {
-                createScannerRunning = true;
-
-                if (scanSerieBtn) {
-                    scanSerieBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Detener cámara';
-                }
-
-                if (addSerieBtn) {
-                    addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
-                }
-            })
-            .catch(function (error) {
-                console.warn(error);
-                alert('No se pudo abrir la cámara. En celular usa HTTPS y da permiso a la cámara.');
-            });
-        }
-
-        if (addSerieBtn) {
-            addSerieBtn.addEventListener('click', function () {
-                if (!serieInputScanner) return;
-
-                if (addCreateSerie(serieInputScanner.value)) {
-                    serieInputScanner.value = '';
-                    serieInputScanner.focus();
-                }
-            });
-        }
-
-        if (serieInputScanner) {
-            serieInputScanner.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-
-                    if (addCreateSerie(serieInputScanner.value)) {
-                        serieInputScanner.value = '';
-                    }
-                }
-            });
-        }
-
-        if (scanSerieBtn) {
-            scanSerieBtn.addEventListener('click', function () {
-                if (createScannerRunning) {
-                    stopCreateScanner();
-                } else {
-                    startCreateScanner();
-                }
-            });
-        }
-
-        if (clearSeriesBtn) {
-            clearSeriesBtn.addEventListener('click', clearCreateSeries);
-        }
-
-        if (seriesList) {
-            seriesList.addEventListener('click', function (event) {
-                const button = event.target.closest('button[data-index]');
-
-                if (!button) return;
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                const index = Number(button.getAttribute('data-index'));
-
-                if (Number.isNaN(index)) return;
-
-                removeCreateSerie(index);
-            });
-        }
-
-        if (createReturnForm) {
-            createReturnForm.addEventListener('submit', function (event) {
-                const cantidad = getCantidadDevolucion();
-
-                if (!cantidad) {
-                    event.preventDefault();
-                    alert('Debes ingresar una cantidad válida antes de guardar.');
-                    return;
-                }
-
-                if (serieInputScanner && serieInputScanner.value.trim()) {
-                    const agregado = addCreateSerie(serieInputScanner.value);
-
-                    if (!agregado) {
-                        event.preventDefault();
-                        return;
-                    }
-
-                    serieInputScanner.value = '';
-                }
-
-                if (createSeries.length < cantidad) {
-                    event.preventDefault();
-
-                    const faltantes = cantidad - createSeries.length;
-
-                    alert(`Faltan ${faltantes} serie(s) por capturar. Cantidad indicada: ${cantidad}. Series capturadas: ${createSeries.length}.`);
-                    return;
-                }
-
-                if (createSeries.length > cantidad) {
-                    event.preventDefault();
-
-                    const sobrantes = createSeries.length - cantidad;
-
-                    alert(`Tienes ${sobrantes} serie(s) de más. Cantidad indicada: ${cantidad}. Series capturadas: ${createSeries.length}.`);
-                    return;
-                }
-
-                if (legacySerieInput) {
-                    legacySerieInput.value = '';
-                }
-
-                syncSeriesHidden();
-            });
-        }
-
-        const cantidadInput = document.getElementById('id_cantidad');
-
-        if (cantidadInput) {
-            cantidadInput.addEventListener('change', function () {
-                const cantidad = getCantidadDevolucion();
-
-                if (!cantidad) {
-                    return;
-                }
-
-                if (createSeries.length > cantidad) {
-                    alert(`Actualmente tienes ${createSeries.length} series capturadas, pero la cantidad indicada es ${cantidad}. Elimina las series sobrantes antes de guardar.`);
-                }
-            });
-        }
-
-        if (createReturnModalElement) {
-            createReturnModalElement.addEventListener('hidden.bs.modal', function () {
-                stopCreateScanner();
             });
         }
 

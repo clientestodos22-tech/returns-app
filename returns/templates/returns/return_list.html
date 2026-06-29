@@ -1736,6 +1736,13 @@
         let createScanner = null;
         let createScannerRunning = false;
 
+        let scannerLastCandidate = '';
+        let scannerStableReads = 0;
+        let scannerLockedCandidate = false;
+
+        const MIN_SCANNER_SERIE_LENGTH = 18;
+        const STABLE_READS_REQUIRED = 2;
+
         const createReturnModalElement = document.getElementById('createReturnModal');
         const createReturnForm = createReturnModalElement ? createReturnModalElement.querySelector('form') : null;
         const serieInputScanner = document.getElementById('serieInputScanner');
@@ -1747,6 +1754,60 @@
         const seriesCount = document.getElementById('seriesCount');
         const scannerContainer = document.getElementById('scannerContainer');
         const legacySerieInput = document.getElementById('id_serie');
+
+        function getCantidadDevolucion() {
+            const cantidadInput = document.getElementById('id_cantidad');
+
+            if (!cantidadInput) {
+                return 0;
+            }
+
+            const cantidad = parseInt(cantidadInput.value, 10);
+
+            if (isNaN(cantidad) || cantidad <= 0) {
+                return 0;
+            }
+
+            return cantidad;
+        }
+
+        function limpiarLecturaScanner(value) {
+            let texto = String(value || '').trim();
+
+            texto = texto.replace(/^LSS[:\s-]*/i, '');
+            texto = texto.replace(/\s+/g, '');
+            texto = texto.replace(/-/g, '');
+
+            const numeros = texto.match(/\d{8,}/g);
+
+            if (numeros && numeros.length) {
+                texto = numeros.sort(function (a, b) {
+                    return b.length - a.length;
+                })[0];
+            }
+
+            return texto;
+        }
+
+        function esLecturaScannerValida(value) {
+            const texto = String(value || '').trim();
+
+            if (!texto) {
+                return false;
+            }
+
+            if (texto.length < MIN_SCANNER_SERIE_LENGTH) {
+                return false;
+            }
+
+            return /^[A-Za-z0-9]+$/.test(texto);
+        }
+
+        function resetScannerCandidate() {
+            scannerLastCandidate = '';
+            scannerStableReads = 0;
+            scannerLockedCandidate = false;
+        }
 
         function syncSeriesHidden() {
             if (seriesJsonInput) {
@@ -1767,7 +1828,6 @@
 
             if (serieInputScanner) {
                 serieInputScanner.disabled = false;
-                serieInputScanner.placeholder = 'Escanea o escribe la serie';
             }
 
             if (scanSerieBtn) {
@@ -1841,7 +1901,319 @@
             }
 
             createSeries.push(serie);
+
+            if (serieInputScanner) {
+                serieInputScanner.value = '';
+                serieInputScanner.placeholder = 'Escanea o escribe la serie';
+                serieInputScanner.focus();
+            }
+
+            if (legacySerieInput) {
+                legacySerieInput.value = '';
+            }
+
             renderCreateSeries();
+            resetScannerCandidate();
+
+            return true;
+        }
+
+        function removeCreateSerie(index) {
+            if (index < 0 || index >= createSeries.length) {
+                return;
+            }
+
+            createSeries.splice(index, 1);
+
+            if (legacySerieInput) {
+                legacySerieInput.value = '';
+            }
+
+            renderCreateSeries();
+            resetScannerCandidate();
+        }
+
+        function clearCreateSeries() {
+            createSeries = [];
+
+            if (legacySerieInput) {
+                legacySerieInput.value = '';
+            }
+
+            if (serieInputScanner) {
+                serieInputScanner.value = '';
+                serieInputScanner.placeholder = 'Escanea o escribe la serie';
+            }
+
+            renderCreateSeries();
+            resetScannerCandidate();
+        }
+
+        function stopCreateScanner() {
+            if (!createScanner || !createScannerRunning) return Promise.resolve();
+
+            return createScanner.stop()
+                .then(function () {
+                    createScannerRunning = false;
+
+                    if (scannerContainer) {
+                        scannerContainer.classList.add('d-none');
+                    }
+
+                    if (scanSerieBtn) {
+                        scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
+                    }
+
+                    if (addSerieBtn) {
+                        addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
+                    }
+                })
+                .catch(function () {
+                    createScannerRunning = false;
+                });
+        }
+
+        function startCreateScanner() {
+            if (!window.Html5Qrcode) {
+                alert('No se pudo cargar el lector de códigos. Revisa la conexión o el CDN.');
+                return;
+            }
+
+            const cantidad = getCantidadDevolucion();
+
+            if (!cantidad) {
+                alert('Primero debes ingresar una cantidad válida.');
+                return;
+            }
+
+            if (createSeries.length >= cantidad) {
+                alert(`Ya capturaste el máximo de series permitido. Cantidad indicada: ${cantidad}.`);
+                return;
+            }
+
+            if (!scannerContainer) return;
+
+            resetScannerCandidate();
+
+            scannerContainer.classList.remove('d-none');
+
+            if (!createScanner) {
+                createScanner = new Html5Qrcode('reader');
+            }
+
+            if (serieInputScanner) {
+                serieInputScanner.value = '';
+                serieInputScanner.placeholder = 'Enfoca el código de barras...';
+            }
+
+            const config = {
+                fps: 8,
+                qrbox: function (viewfinderWidth, viewfinderHeight) {
+                    return {
+                        width: Math.floor(viewfinderWidth * 0.90),
+                        height: Math.floor(Math.min(viewfinderHeight * 0.45, 260))
+                    };
+                },
+                aspectRatio: 1.7777778,
+                disableFlip: false,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
+            };
+
+            if (window.Html5QrcodeSupportedFormats) {
+                config.formatsToSupport = [
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8,
+                    Html5QrcodeSupportedFormats.UPC_A,
+                    Html5QrcodeSupportedFormats.UPC_E,
+                    Html5QrcodeSupportedFormats.QR_CODE
+                ];
+            }
+
+            createScanner.start(
+                { facingMode: 'environment' },
+                config,
+                function (decodedText) {
+                    if (scannerLockedCandidate) {
+                        return;
+                    }
+
+                    const lectura = limpiarLecturaScanner(decodedText);
+
+                    if (!esLecturaScannerValida(lectura)) {
+                        return;
+                    }
+
+                    if (lectura === scannerLastCandidate) {
+                        scannerStableReads += 1;
+                    } else {
+                        scannerLastCandidate = lectura;
+                        scannerStableReads = 1;
+                    }
+
+                    if (scannerStableReads < STABLE_READS_REQUIRED) {
+                        if (serieInputScanner) {
+                            serieInputScanner.placeholder = `Verificando lectura: ${lectura}`;
+                        }
+
+                        return;
+                    }
+
+                    scannerLockedCandidate = true;
+
+                    if (serieInputScanner) {
+                        serieInputScanner.value = lectura;
+                        serieInputScanner.placeholder = 'Lectura lista. Presiona Capturar serie.';
+                        serieInputScanner.focus();
+                    }
+
+                    stopCreateScanner();
+                },
+                function () {}
+            )
+            .then(function () {
+                createScannerRunning = true;
+
+                if (scanSerieBtn) {
+                    scanSerieBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Detener cámara';
+                }
+
+                if (addSerieBtn) {
+                    addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
+                }
+            })
+            .catch(function (error) {
+                console.warn(error);
+                alert('No se pudo abrir la cámara. En celular usa HTTPS y da permiso a la cámara.');
+            });
+        }
+
+        if (addSerieBtn) {
+            addSerieBtn.addEventListener('click', function () {
+                if (!serieInputScanner) return;
+
+                const agregado = addCreateSerie(serieInputScanner.value);
+
+                if (agregado && createScannerRunning) {
+                    stopCreateScanner();
+                }
+            });
+        }
+
+        if (serieInputScanner) {
+            serieInputScanner.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    addCreateSerie(serieInputScanner.value);
+                }
+            });
+        }
+
+        if (scanSerieBtn) {
+            scanSerieBtn.addEventListener('click', function () {
+                if (createScannerRunning) {
+                    stopCreateScanner();
+                } else {
+                    startCreateScanner();
+                }
+            });
+        }
+
+        if (clearSeriesBtn) {
+            clearSeriesBtn.addEventListener('click', function () {
+                clearCreateSeries();
+            });
+        }
+
+        if (seriesList) {
+            seriesList.addEventListener('click', function (event) {
+                const button = event.target.closest('button[data-index]');
+
+                if (!button) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const index = Number(button.getAttribute('data-index'));
+
+                if (Number.isNaN(index)) return;
+
+                removeCreateSerie(index);
+            });
+        }
+
+        if (createReturnForm) {
+            createReturnForm.addEventListener('submit', function (event) {
+                const cantidad = getCantidadDevolucion();
+
+                if (!cantidad) {
+                    event.preventDefault();
+                    alert('Debes ingresar una cantidad válida antes de guardar.');
+                    return;
+                }
+
+                if (serieInputScanner && serieInputScanner.value.trim()) {
+                    const agregado = addCreateSerie(serieInputScanner.value);
+
+                    if (!agregado) {
+                        event.preventDefault();
+                        return;
+                    }
+                }
+
+                if (createSeries.length < cantidad) {
+                    event.preventDefault();
+
+                    const faltantes = cantidad - createSeries.length;
+
+                    alert(`Faltan ${faltantes} serie(s) por capturar. Cantidad indicada: ${cantidad}. Series capturadas: ${createSeries.length}.`);
+                    return;
+                }
+
+                if (createSeries.length > cantidad) {
+                    event.preventDefault();
+
+                    const sobrantes = createSeries.length - cantidad;
+
+                    alert(`Tienes ${sobrantes} serie(s) de más. Cantidad indicada: ${cantidad}. Series capturadas: ${createSeries.length}.`);
+                    return;
+                }
+
+                if (legacySerieInput) {
+                    legacySerieInput.value = '';
+                }
+
+                syncSeriesHidden();
+            });
+        }
+
+        const cantidadInput = document.getElementById('id_cantidad');
+
+        if (cantidadInput) {
+            cantidadInput.addEventListener('change', function () {
+                const cantidad = getCantidadDevolucion();
+
+                if (!cantidad) {
+                    return;
+                }
+
+                if (createSeries.length > cantidad) {
+                    alert(`Actualmente tienes ${createSeries.length} series capturadas, pero la cantidad indicada es ${cantidad}. Elimina las series sobrantes antes de guardar.`);
+                }
+            });
+        }
+
+        if (createReturnModalElement) {
+            createReturnModalElement.addEventListener('hidden.bs.modal', function () {
+                stopCreateScanner();
+                resetScannerCandidate();
+            });
+        }
+
+        renderCreateSeries();
             return true;
         }
 

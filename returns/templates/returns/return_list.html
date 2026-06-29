@@ -1960,6 +1960,11 @@
                         scannerContainer.classList.add('d-none');
                     }
 
+                    const reader = document.getElementById('reader');
+                    if (reader) {
+                        reader.innerHTML = '';
+                    }
+
                     if (scanSerieBtn) {
                         scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
                     }
@@ -1968,14 +1973,15 @@
                         addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
                     }
                 })
-                .catch(function () {
+                .catch(function (error) {
+                    console.warn('Error deteniendo cámara:', error);
                     createScannerRunning = false;
                 });
         }
 
-        function startCreateScanner() {
+        async function startCreateScanner() {
             if (!window.Html5Qrcode) {
-                alert('No se pudo cargar el lector de códigos. Revisa la conexión o el CDN.');
+                alert('No se pudo cargar el lector de códigos. Revisa que esté cargado html5-qrcode.');
                 return;
             }
 
@@ -1991,104 +1997,161 @@
                 return;
             }
 
-            if (!scannerContainer) return;
+            if (!scannerContainer) {
+                alert('No se encontró el contenedor de la cámara.');
+                return;
+            }
+
+            const reader = document.getElementById('reader');
+
+            if (!reader) {
+                alert('No se encontró el lector de cámara.');
+                return;
+            }
 
             resetScannerCandidate();
 
             scannerContainer.classList.remove('d-none');
-
-            if (!createScanner) {
-                createScanner = new Html5Qrcode('reader');
-            }
+            scannerContainer.style.display = 'block';
+            reader.innerHTML = '';
 
             if (serieInputScanner) {
                 serieInputScanner.value = '';
-                serieInputScanner.placeholder = 'Enfoca el código de barras...';
+                serieInputScanner.placeholder = 'Abriendo cámara...';
             }
 
-            const config = {
-                fps: 8,
-                qrbox: function (viewfinderWidth, viewfinderHeight) {
-                    return {
-                        width: Math.floor(viewfinderWidth * 0.90),
-                        height: Math.floor(Math.min(viewfinderHeight * 0.45, 260))
-                    };
-                },
-                aspectRatio: 1.7777778,
-                disableFlip: false,
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
+            if (scanSerieBtn) {
+                scanSerieBtn.disabled = true;
+                scanSerieBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Abriendo...';
+            }
+
+            // Espera pequeña para que el modal muestre el contenedor antes de iniciar cámara
+            await new Promise(function (resolve) {
+                setTimeout(resolve, 350);
+            });
+
+            try {
+                const cameras = await Html5Qrcode.getCameras();
+
+                if (!cameras || !cameras.length) {
+                    alert('No se detectó ninguna cámara. Revisa permisos del navegador.');
+                    return;
                 }
-            };
 
-            if (window.Html5QrcodeSupportedFormats) {
-                config.formatsToSupport = [
-                    Html5QrcodeSupportedFormats.CODE_128,
-                    Html5QrcodeSupportedFormats.CODE_39,
-                    Html5QrcodeSupportedFormats.EAN_13,
-                    Html5QrcodeSupportedFormats.EAN_8,
-                    Html5QrcodeSupportedFormats.UPC_A,
-                    Html5QrcodeSupportedFormats.UPC_E,
-                    Html5QrcodeSupportedFormats.QR_CODE
-                ];
-            }
+                let selectedCamera = cameras[cameras.length - 1];
 
-            createScanner.start(
-                { facingMode: 'environment' },
-                config,
-                function (decodedText) {
-                    if (scannerLockedCandidate) {
-                        return;
-                    }
+                const backCamera = cameras.find(function (camera) {
+                    const label = String(camera.label || '').toLowerCase();
+                    return (
+                        label.includes('back') ||
+                        label.includes('rear') ||
+                        label.includes('environment') ||
+                        label.includes('trasera')
+                    );
+                });
 
-                    const lectura = limpiarLecturaScanner(decodedText);
+                if (backCamera) {
+                    selectedCamera = backCamera;
+                }
 
-                    if (!esLecturaScannerValida(lectura)) {
-                        return;
-                    }
+                createScanner = new Html5Qrcode('reader');
 
-                    if (lectura === scannerLastCandidate) {
-                        scannerStableReads += 1;
-                    } else {
-                        scannerLastCandidate = lectura;
-                        scannerStableReads = 1;
-                    }
+                const config = {
+                    fps: 6,
+                    qrbox: {
+                        width: 300,
+                        height: 160
+                    },
+                    aspectRatio: 1.7777778,
+                    disableFlip: false
+                };
 
-                    if (scannerStableReads < STABLE_READS_REQUIRED) {
-                        if (serieInputScanner) {
-                            serieInputScanner.placeholder = `Verificando lectura: ${lectura}`;
+                if (window.Html5QrcodeSupportedFormats) {
+                    config.formatsToSupport = [
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.UPC_E,
+                        Html5QrcodeSupportedFormats.QR_CODE
+                    ];
+                }
+
+                await createScanner.start(
+                    selectedCamera.id,
+                    config,
+                    function (decodedText) {
+                        if (scannerLockedCandidate) {
+                            return;
                         }
 
-                        return;
-                    }
+                        const lectura = limpiarLecturaScanner(decodedText);
 
-                    scannerLockedCandidate = true;
+                        if (!esLecturaScannerValida(lectura)) {
+                            return;
+                        }
 
-                    if (serieInputScanner) {
-                        serieInputScanner.value = lectura;
-                        serieInputScanner.placeholder = 'Lectura lista. Presiona Capturar serie.';
-                        serieInputScanner.focus();
-                    }
+                        if (lectura === scannerLastCandidate) {
+                            scannerStableReads += 1;
+                        } else {
+                            scannerLastCandidate = lectura;
+                            scannerStableReads = 1;
+                        }
 
-                    stopCreateScanner();
-                },
-                function () {}
-            )
-            .then(function () {
+                        if (scannerStableReads < STABLE_READS_REQUIRED) {
+                            if (serieInputScanner) {
+                                serieInputScanner.placeholder = `Verificando lectura: ${lectura}`;
+                            }
+
+                            return;
+                        }
+
+                        scannerLockedCandidate = true;
+
+                        if (serieInputScanner) {
+                            serieInputScanner.value = lectura;
+                            serieInputScanner.placeholder = 'Lectura lista. Presiona Capturar serie.';
+                            serieInputScanner.focus();
+                        }
+
+                        stopCreateScanner();
+                    },
+                    function () {}
+                );
+
                 createScannerRunning = true;
 
                 if (scanSerieBtn) {
+                    scanSerieBtn.disabled = false;
                     scanSerieBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Detener cámara';
                 }
 
                 if (addSerieBtn) {
                     addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
                 }
-            })
-            .catch(function (error) {
-                console.warn(error);
-                alert('No se pudo abrir la cámara. En celular usa HTTPS y da permiso a la cámara.');
-            });
+
+                scannerContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+            } catch (error) {
+                console.warn('Error abriendo cámara:', error);
+
+                createScannerRunning = false;
+
+                if (scannerContainer) {
+                    scannerContainer.classList.add('d-none');
+                }
+
+                if (scanSerieBtn) {
+                    scanSerieBtn.disabled = false;
+                    scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
+                }
+
+                alert('No se pudo abrir la cámara. Revisa permisos de cámara en Chrome y vuelve a intentar.');
+            }
         }
 
         if (addSerieBtn) {

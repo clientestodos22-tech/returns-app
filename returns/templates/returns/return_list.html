@@ -1116,7 +1116,7 @@
 
                                 <div class="alert alert-light border small mb-3">
                                     Si llegan varias unidades del mismo SKU, escanea o escribe cada serie aquí.
-                                    El campo <strong>Serie</strong> de arriba queda como respaldo.
+                                    No hay límite de cantidad y se respetan los ceros iniciales.
                                 </div>
 
                                 <div class="row g-2 align-items-end">
@@ -1128,6 +1128,7 @@
                                             class="form-control"
                                             placeholder="Escanea o escribe la serie"
                                             autocomplete="off"
+                                            inputmode="text"
                                         >
                                     </div>
 
@@ -1150,8 +1151,6 @@
                                     <div class="small text-muted">
                                         Capturadas:
                                         <strong><span id="seriesCount">0</span></strong>
-                                        /
-                                        <span id="seriesTarget">0</span>
                                     </div>
 
                                     <button type="button" class="btn btn-sm btn-outline-danger d-none" id="clearSeriesBtn">
@@ -1742,27 +1741,10 @@
         const seriesJsonInput = document.getElementById('seriesJson');
         const seriesList = document.getElementById('seriesList');
         const seriesCount = document.getElementById('seriesCount');
-        const seriesTarget = document.getElementById('seriesTarget');
         const scannerContainer = document.getElementById('scannerContainer');
-        const cantidadInput = document.getElementById('id_cantidad');
         const legacySerieInput = document.getElementById('id_serie');
 
-        function getSeriesTarget() {
-            if (!cantidadInput) return 0;
-
-            const value = parseInt(cantidadInput.value || '0', 10);
-            return Number.isFinite(value) && value > 0 ? value : 0;
-        }
-
-        function isSeriesLimitReached() {
-            const target = getSeriesTarget();
-            return target > 0 && createSeries.length >= target;
-        }
-
         function syncSeriesHidden() {
-            const target = getSeriesTarget();
-            const limitReached = target > 0 && createSeries.length >= target;
-
             if (seriesJsonInput) {
                 seriesJsonInput.value = JSON.stringify(createSeries);
             }
@@ -1771,27 +1753,21 @@
                 seriesCount.textContent = createSeries.length;
             }
 
-            if (seriesTarget) {
-                seriesTarget.textContent = target;
-            }
-
             if (clearSeriesBtn) {
                 clearSeriesBtn.classList.toggle('d-none', createSeries.length === 0);
             }
 
             if (addSerieBtn) {
-                addSerieBtn.disabled = limitReached;
+                addSerieBtn.disabled = false;
             }
 
             if (serieInputScanner) {
-                serieInputScanner.disabled = limitReached;
-                serieInputScanner.placeholder = limitReached
-                    ? 'Cantidad completa'
-                    : 'Escanea o escribe la serie';
+                serieInputScanner.disabled = false;
+                serieInputScanner.placeholder = 'Escanea o escribe la serie';
             }
 
             if (scanSerieBtn) {
-                scanSerieBtn.disabled = limitReached && !createScannerRunning;
+                scanSerieBtn.disabled = false;
             }
         }
 
@@ -1833,14 +1809,8 @@
 
         function addCreateSerie(value) {
             const serie = String(value || '').trim();
-            const target = getSeriesTarget();
 
             if (!serie) return false;
-
-            if (target <= 0) {
-                alert('Primero ingresa una cantidad válida.');
-                return false;
-            }
 
             const exists = createSeries.some(function (item) {
                 return item.toUpperCase() === serie.toUpperCase();
@@ -1851,11 +1821,6 @@
                 return false;
             }
 
-            if (createSeries.length >= target) {
-                alert(`No puedes agregar más de ${target} serie(s).`);
-                return false;
-            }
-
             createSeries.push(serie);
 
             if (legacySerieInput && !legacySerieInput.value.trim()) {
@@ -1863,11 +1828,6 @@
             }
 
             renderCreateSeries();
-
-            if (isSeriesLimitReached()) {
-                stopCreateScanner();
-            }
-
             return true;
         }
 
@@ -1912,18 +1872,6 @@
         }
 
         function startCreateScanner() {
-            const target = getSeriesTarget();
-
-            if (target <= 0) {
-                alert('Primero ingresa una cantidad válida.');
-                return;
-            }
-
-            if (isSeriesLimitReached()) {
-                alert(`Ya capturaste las ${target} serie(s) indicadas en cantidad.`);
-                return;
-            }
-
             if (!window.Html5Qrcode) {
                 alert('No se pudo cargar el lector de códigos. Revisa la conexión o el CDN.');
                 return;
@@ -1958,19 +1906,10 @@
                 { facingMode: 'environment' },
                 config,
                 function (decodedText) {
-                    if (isSeriesLimitReached()) {
-                        stopCreateScanner();
-                        return;
-                    }
-
                     const added = addCreateSerie(decodedText);
 
                     if (added && serieInputScanner) {
                         serieInputScanner.value = '';
-                    }
-
-                    if (added && isSeriesLimitReached()) {
-                        stopCreateScanner();
                     }
                 },
                 function () {}
@@ -1985,27 +1924,6 @@
             .catch(function (error) {
                 console.warn(error);
                 alert('No se pudo abrir la cámara. En celular usa HTTPS y da permiso a la cámara.');
-            });
-        }
-
-        if (cantidadInput) {
-            cantidadInput.addEventListener('input', function () {
-                const target = getSeriesTarget();
-
-                if (target > 0 && createSeries.length > target) {
-                    alert(`La cantidad ahora es ${target}. Se eliminarán las series sobrantes.`);
-                    createSeries = createSeries.slice(0, target);
-
-                    if (legacySerieInput) {
-                        legacySerieInput.value = createSeries[0] || '';
-                    }
-                }
-
-                renderCreateSeries();
-
-                if (isSeriesLimitReached()) {
-                    stopCreateScanner();
-                }
             });
         }
 
@@ -2057,31 +1975,13 @@
         }
 
         if (createReturnForm) {
-            createReturnForm.addEventListener('submit', function (event) {
+            createReturnForm.addEventListener('submit', function () {
                 if (serieInputScanner && serieInputScanner.value.trim()) {
                     addCreateSerie(serieInputScanner.value);
                     serieInputScanner.value = '';
                 }
 
                 syncSeriesHidden();
-
-                const target = getSeriesTarget();
-
-                if (target && createSeries.length > target) {
-                    event.preventDefault();
-                    alert(`No puedes guardar ${createSeries.length} series si la cantidad indicada es ${target}.`);
-                    return;
-                }
-
-                if (createSeries.length && target && createSeries.length < target) {
-                    const ok = confirm(
-                        `La cantidad ingresada es ${target}, pero capturaste ${createSeries.length} serie(s). ¿Deseas guardar de todas formas?`
-                    );
-
-                    if (!ok) {
-                        event.preventDefault();
-                    }
-                }
             });
         }
 
@@ -2495,7 +2395,9 @@
             document.getElementById('detail-cliente').textContent = button.dataset.cliente || '-';
             document.getElementById('detail-sku').textContent = button.dataset.sku || '-';
             document.getElementById('detail-cantidad').textContent = button.dataset.cantidad || '-';
-            document.getElementById('detail-serie').textContent = button.dataset.serie || '-';
+            document.getElementById('detail-serie').textContent = cachedItem.series && cachedItem.series.length
+                ? cachedItem.series.join(', ')
+                : (button.dataset.serie || '-');
             document.getElementById('detail-estado-inventario').textContent = button.dataset.estadoInventario || '-';
             document.getElementById('detail-ubicacion').textContent = button.dataset.ubicacion || '-';
 

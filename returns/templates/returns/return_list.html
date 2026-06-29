@@ -1810,35 +1810,60 @@
         function addCreateSerie(value) {
             const serie = String(value || '').trim();
 
-            if (!serie) return false;
+            if (!serie) {
+                return false;
+            }
+
+            const cantidad = getCantidadDevolucion();
+
+            if (!cantidad) {
+                alert('Primero debes ingresar una cantidad válida.');
+                return false;
+            }
 
             const exists = createSeries.some(function (item) {
                 return item.toUpperCase() === serie.toUpperCase();
             });
 
             if (exists) {
-                alert('Esta serie ya fue agregada.');
+                alert('Esta serie ya fue agregada. No puedes duplicar series.');
+                return false;
+            }
+
+            if (createSeries.length >= cantidad) {
+                alert(`Ya capturaste el máximo de series permitido. Cantidad indicada: ${cantidad}.`);
                 return false;
             }
 
             createSeries.push(serie);
-
-            if (legacySerieInput && !legacySerieInput.value.trim()) {
-                legacySerieInput.value = serie;
-            }
-
             renderCreateSeries();
             return true;
         }
 
-        function removeCreateSerie(index) {
-            createSeries.splice(index, 1);
+        function clearCreateSeries() {
+            createSeries = [];
 
             if (legacySerieInput) {
-                legacySerieInput.value = createSeries[0] || '';
+                legacySerieInput.value = '';
             }
 
             renderCreateSeries();
+        }
+
+        function getCantidadDevolucion() {
+            const cantidadInput = document.getElementById('id_cantidad');
+
+            if (!cantidadInput) {
+                return 0;
+            }
+
+            const cantidad = parseInt(cantidadInput.value, 10);
+
+            if (isNaN(cantidad) || cantidad <= 0) {
+                return 0;
+            }
+
+            return cantidad;
         }
 
         function clearCreateSeries() {
@@ -1975,13 +2000,65 @@
         }
 
         if (createReturnForm) {
-            createReturnForm.addEventListener('submit', function () {
+            createReturnForm.addEventListener('submit', function (event) {
+                const cantidad = getCantidadDevolucion();
+
+                if (!cantidad) {
+                    event.preventDefault();
+                    alert('Debes ingresar una cantidad válida antes de guardar.');
+                    return;
+                }
+
                 if (serieInputScanner && serieInputScanner.value.trim()) {
-                    addCreateSerie(serieInputScanner.value);
+                    const agregado = addCreateSerie(serieInputScanner.value);
+
+                    if (!agregado) {
+                        event.preventDefault();
+                        return;
+                    }
+
                     serieInputScanner.value = '';
                 }
 
+                if (createSeries.length < cantidad) {
+                    event.preventDefault();
+
+                    const faltantes = cantidad - createSeries.length;
+
+                    alert(`Faltan ${faltantes} serie(s) por capturar. Cantidad indicada: ${cantidad}. Series capturadas: ${createSeries.length}.`);
+                    return;
+                }
+
+                if (createSeries.length > cantidad) {
+                    event.preventDefault();
+
+                    const sobrantes = createSeries.length - cantidad;
+
+                    alert(`Tienes ${sobrantes} serie(s) de más. Cantidad indicada: ${cantidad}. Series capturadas: ${createSeries.length}.`);
+                    return;
+                }
+
+                if (legacySerieInput) {
+                    legacySerieInput.value = '';
+                }
+
                 syncSeriesHidden();
+            });
+        }
+
+        const cantidadInput = document.getElementById('id_cantidad');
+
+        if (cantidadInput) {
+            cantidadInput.addEventListener('change', function () {
+                const cantidad = getCantidadDevolucion();
+
+                if (!cantidad) {
+                    return;
+                }
+
+                if (createSeries.length > cantidad) {
+                    alert(`Actualmente tienes ${createSeries.length} series capturadas, pero la cantidad indicada es ${cantidad}. Elimina las series sobrantes antes de guardar.`);
+                }
             });
         }
 

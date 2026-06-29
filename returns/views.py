@@ -435,6 +435,77 @@ def return_create(request):
         form = ReturnRequestForm(request.POST, request.FILES, user=request.user)
 
         if form.is_valid():
+            cantidad = form.cleaned_data.get('cantidad') or 0
+            cantidad = int(cantidad)
+
+            # Lee las series originales enviadas desde el modal
+            series_raw = []
+            raw_json = request.POST.get('series_json', '')
+
+            if raw_json:
+                try:
+                    data = json.loads(raw_json)
+
+                    if isinstance(data, list):
+                        for item in data:
+                            serie = normalizar_serie(item)
+                            if serie:
+                                series_raw.append(serie)
+
+                except json.JSONDecodeError:
+                    messages.error(request, 'Error leyendo las series capturadas. Intente nuevamente.')
+                    return redirect('returns:return_list')
+
+            # También toma el campo legacy "serie" si viene lleno
+            serie_legacy = normalizar_serie(request.POST.get('serie'))
+
+            if serie_legacy:
+                series_raw.append(serie_legacy)
+
+            # Validar duplicados antes de guardar
+            vistos = set()
+            duplicadas = []
+
+            for serie in series_raw:
+                key = serie.upper()
+
+                if key in vistos:
+                    duplicadas.append(serie)
+                else:
+                    vistos.add(key)
+
+            if duplicadas:
+                messages.error(
+                    request,
+                    f'Serie duplicada detectada: {", ".join(duplicadas)}. No puedes registrar series repetidas.'
+                )
+                return redirect('returns:return_list')
+
+            # Series normalizadas y únicas
+            series = obtener_series_desde_request(request)
+            total_series = len(series)
+
+            # Validar que la cantidad coincida exactamente con las series
+            if total_series < cantidad:
+                faltantes = cantidad - total_series
+
+                messages.error(
+                    request,
+                    f'Faltan {faltantes} serie(s) por capturar. '
+                    f'Cantidad indicada: {cantidad}. Series capturadas: {total_series}.'
+                )
+                return redirect('returns:return_list')
+
+            if total_series > cantidad:
+                sobrantes = total_series - cantidad
+
+                messages.error(
+                    request,
+                    f'Tienes {sobrantes} serie(s) de más. '
+                    f'Cantidad indicada: {cantidad}. Series capturadas: {total_series}.'
+                )
+                return redirect('returns:return_list')
+
             devolucion = form.save(commit=False)
             devolucion.estado = 'RECIBIDO'
             devolucion.creado_por = request.user
@@ -442,17 +513,17 @@ def return_create(request):
             devolucion.save()
 
             guardar_adjuntos_internos(devolucion, request)
-            total_series = guardar_series_devolucion(devolucion, request)
+            total_series_guardadas = guardar_series_devolucion(devolucion, request)
 
-            if total_series:
-                messages.success(
-                    request,
-                    f'Devolución registrada correctamente con {total_series} serie(s).'
-                )
-            else:
-                messages.success(request, 'Devolución registrada correctamente.')
+            messages.success(
+                request,
+                f'Devolución registrada correctamente con {total_series_guardadas} serie(s).'
+            )
 
             return redirect('returns:return_list')
+
+        messages.error(request, 'No se pudo registrar la devolución. Revisa los campos obligatorios.')
+
     else:
         form = ReturnRequestForm(user=request.user)
 

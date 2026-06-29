@@ -507,7 +507,11 @@
             color: var(--red);
             font-weight: 900;
             line-height: 1;
-            padding: 0;
+            padding: 4px 6px;
+            font-size: 18px;
+            cursor: pointer;
+            min-width: 26px;
+            min-height: 26px;
         }
 
         #scannerContainer {
@@ -1794,9 +1798,10 @@
 
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
-                removeBtn.innerHTML = '&times;';
-                removeBtn.setAttribute('aria-label', 'Eliminar serie');
-                removeBtn.dataset.index = String(index);
+                removeBtn.textContent = '×';
+                removeBtn.title = 'Eliminar esta serie';
+                removeBtn.setAttribute('aria-label', 'Eliminar esta serie');
+                removeBtn.setAttribute('data-index', String(index));
                 removeBtn.className = 'js-remove-create-serie';
 
                 badge.appendChild(text);
@@ -1890,6 +1895,10 @@
                     if (scanSerieBtn) {
                         scanSerieBtn.innerHTML = '<i class="bi bi-camera me-1"></i>Cámara';
                     }
+
+                    if (addSerieBtn) {
+                        addSerieBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar';
+                    }
                 })
                 .catch(function () {
                     createScannerRunning = false;
@@ -1931,10 +1940,14 @@
                 { facingMode: 'environment' },
                 config,
                 function (decodedText) {
-                    const added = addCreateSerie(decodedText);
-
-                    if (added && serieInputScanner) {
-                        serieInputScanner.value = '';
+                    /*
+                        MODO MANUAL:
+                        La cámara solo coloca la serie detectada en el input.
+                        NO la agrega automáticamente.
+                        Para agregarla, debes presionar el botón Agregar/Capturar.
+                    */
+                    if (serieInputScanner) {
+                        serieInputScanner.value = String(decodedText || '').trim();
                     }
                 },
                 function () {}
@@ -1943,7 +1956,11 @@
                 createScannerRunning = true;
 
                 if (scanSerieBtn) {
-                    scanSerieBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Detener';
+                    scanSerieBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i>Detener cámara';
+                }
+
+                if (addSerieBtn) {
+                    addSerieBtn.innerHTML = '<i class="bi bi-upc-scan me-1"></i>Capturar serie';
                 }
             })
             .catch(function (error) {
@@ -1991,11 +2008,18 @@
 
         if (seriesList) {
             seriesList.addEventListener('click', function (event) {
-                const button = event.target.closest('.js-remove-create-serie');
+                const button = event.target.closest('button[data-index]');
 
                 if (!button) return;
 
-                removeCreateSerie(Number(button.dataset.index));
+                event.preventDefault();
+                event.stopPropagation();
+
+                const index = Number(button.getAttribute('data-index'));
+
+                if (Number.isNaN(index)) return;
+
+                removeCreateSerie(index);
             });
         }
 
